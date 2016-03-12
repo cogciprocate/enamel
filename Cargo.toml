@@ -3,4 +3,8 @@ name = "enamel"
 version = "0.1.0"
 authors = ["Nick Sanders <cogciprocate@gmail.com>"]
 
+[dependencies.glium_text]
+git = "https://github.com/tomaka/glium_text.git"
+
 [dependencies]
+glium = "0.13"
