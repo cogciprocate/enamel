@@ -2,9 +2,15 @@
 name = "enamel"
 version = "0.1.0"
 authors = ["Nick Sanders <cogciprocate@gmail.com>"]
-
-[dependencies.glium_text]
-git = "https://github.com/tomaka/glium_text.git"
+description = "A simple OpenGL interface overlay for use with Glium."
+documentation = "https://github.com/cogciprocate/enamel"
+homepage = "https://github.com/cogciprocate/enamel"
+repository = "https://github.com/cogciprocate/enamel"
+readme = "README.md"
+keywords = ["opengl", "interface"]
+license = "MIT"
+exclude = ["target/*", "*.png", "bak/*"]
 
 [dependencies]
 glium = "0.13"
+glium_text = "0.8"
