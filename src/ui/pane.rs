@@ -1,11 +1,9 @@
 #![allow(dead_code, unused_variables)]
-// use std::ops::{Deref};
 use glium_text::{self, TextSystem, FontTexture, TextDisplay};
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::{self, VertexBuffer, IndexBuffer, Program, DrawParameters, Surface};
 use glium::vertex::{EmptyInstanceAttributes as EIAttribs};
 use glium::glutin::{ElementState, MouseButton, Event, VirtualKeyCode};
-// use window::{Window, };
 use ui::{self, Vertex, Element, MouseState, KeyboardState, UiRequest, EventRemainder};
 
 const TWOSR3: f32 = 1.15470053838;
@@ -130,56 +128,34 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
     }
 
     pub fn handle_event(&mut self, event: Event) -> R {
-        // use glium::glutin::Event::{Closed, Resized, KeyboardInput, MouseInput, MouseMoved};
-        // use glium::glutin::ElementState::{Released, Pressed};
-
         match event {
             Event::Closed => {                    
-                // window.close_pending = true;
-                // EventRemainder::Closed
                 R::closed()
             },
             Event::Resized(..) => {
                 self.refresh_vertices();
-                // R::default()
                 R::default()
             },
             Event::KeyboardInput(key_state, _, vk_code) => {
-                // [WINDOW REMOVED]:
-                // self.handle_keyboard_input(key_state, vk_code, window)
                 let res = self.handle_keyboard_input(key_state, vk_code);
                 println!("PANE::HANDLE_EVENT(): returning: {:?}", res);
                 res
             },
             Event::MouseInput(state, button) => {
                 self.mouse_state.update_button(button, state);
-
-                // [WINDOW REMOVED]:
-                // self.handle_mouse_input(state, button, window);
                 self.handle_mouse_input(state, button)
             },
             Event::MouseMoved(p) => {
                 self.mouse_state.update_position(p);
-                // [WINDOW REMOVED]:
-                // window.handle_mouse_moved(&self.mouse_state);
-                // EventRemainder::MousePosition(p.0, p.1)
                 R::mouse_moved(p)
             },
             Event::MouseWheel(delta) => {
-                // let _ = touch_phase;
-                // [WINDOW REMOVED]:
-                // window.handle_mouse_wheel(scroll_delta);
-                // EventRemainder::MouseWheel(scroll_delta)
                 R::mouse_wheel(delta)
             },
             _ => R::default()
         }
     }
     
-    // [WINDOW REMOVED]:
-    // fn handle_keyboard_input(&mut self, key_state: ElementState, vk_code: Option<VirtualKeyCode>,
-    //             window: &mut Window) 
-    // {
     fn handle_keyboard_input(&mut self, key_state: ElementState, vk_code: Option<VirtualKeyCode>) 
             -> R
     {
@@ -188,22 +164,6 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
 
         // Handle any hotkey combinations which may have occurred:
         if self.keybd_state.control {
-            // if let ElementState::Pressed = key_state {
-            //     if let Some(vkc) = vk_code {        
-            //         // use glium::glutin::VirtualKeyCode::*;            
-            //         match vkc {
-            //             // [WINDOW REMOVED]:
-            //             // Q => window.close_pending = true,
-            //             VirtualKeyCode::Q => EventRemainder::Closed,
-            //             _ => R::default(),
-            //         }
-            //     } else {
-            //         R::default()
-            //     }
-            // } else {
-            //     R::default()
-            // }
-
             // 'Control' is down:
             match key_state {
                 ElementState::Pressed => {
@@ -223,8 +183,6 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
             // No modifiers:
             // Pass input to the element that has keyboard focus, if any:
             if let Some(ele_idx) = self.keybd_focused {
-                // [WINDOW REMOVED]:
-                // self.elements[ele_idx].handle_keyboard_input(key_state, vk_code, &self.keybd_state, window);
                 let (request, remainder) = self.elements[ele_idx].handle_keyboard_input(
                     key_state, vk_code, &self.keybd_state);
                 println!("PANE::HANDLE_KEYBOARD_INPUT(): returning: {:?}", remainder);
@@ -240,8 +198,6 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
 
         match self.mouse_focused {
             Some(ele_idx) => {
-                // [WINDOW REMOVED]:
-                // match self.elements[ele_idx].handle_mouse_input(state, button, window) {
                 let (request, remainder) = self.elements[ele_idx].handle_mouse_input(state, button);
 
                 // If element returns a request we can handle, return
@@ -281,20 +237,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                 R::default()
             }
         }
-
-        // event_result
-        // self.refresh_vertices();
-
-        // println!("    Keyboard Focus: {:?}", self.keybd_focused);
     }
-
-    // [DEPRICATED]
-    // fn handle_mouse_scroll(&mut self, scroll_delta: MouseScrollDelta, window: &mut Window) {
-    //     match scroll_delta {
-    //         MouseScrollDelta::LineDelta(v, h) => window.scroll(v, h),
-    //         MouseScrollDelta::PixelDelta(x, y) => println!("vibi: Pixel delta recieved: ({}, {})", x, y),
-    //     }
-    // }
 
     pub fn draw<S: Surface>(&mut self, target: &mut S) {
         if self.vbo.is_none() || self.ibo.is_none() { 

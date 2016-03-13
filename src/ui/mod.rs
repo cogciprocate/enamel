@@ -15,16 +15,12 @@ pub use self::keyboard_state::KeyboardState;
 pub use self::element::{Element, ElementBorder, ElementKind, ElementText};
 pub use self::pane::Pane;
 pub use self::shape_2d::Shape2d;
-// pub use self::text_properties::TextProperties;
 pub use self::vertex::Vertex;
 pub use self::traits::{CustomEventRemainder, EventRemainder};
 pub use self::types::{MouseInputHandler, KeyboardInputHandler, MouseEventHandler, KeyboardEventHandler};
 pub use self::enums::{TextAlign, UiRequest, EventRemainderOld, HandlerOption};
 pub use self::functions::{ key_into_string };
-// pub use self::traits::HandlerWindow;
 
-
-// pub use glium::glutin::{ElementState, MouseButton, MouseScrollDelta};
 
 pub const C_PINK: [f32; 4] = [0.990, 0.490, 0.700, 1.0];
 pub const C_ORANGE: [f32; 4] = [0.960, 0.400, 0.0, 1.0];
@@ -35,12 +31,10 @@ pub const SUBDEPTH: f32 = -0.015625;
 pub const SUBSUBDEPTH: f32 = 0.000244140625;
 
 
-// Implement this one day. Just a type which has some data for the handlers to use.
 mod traits {
     use std::fmt::{Debug, Formatter, Result as FmtResult};
     use std::default::Default;
     use glium::glutin::MouseScrollDelta;
-    // pub trait HandlerWindow {}
 
     pub trait EventRemainder: Clone + Debug + Default {
         fn closed() -> Self;
@@ -87,17 +81,9 @@ mod traits {
 mod types {
     use glium::glutin::{ElementState, MouseButton, VirtualKeyCode};
     use ui::{EventRemainderOld, UiRequest, KeyboardState};
-    // [WINDOW REMOVED]:
-    // use window::Window;
 
-    // [WINDOW REMOVED]:
-    // pub type MouseInputHandler = Box<FnMut(ElementState, MouseButton, 
-    //     &mut Window) -> EventRemainder>;
     pub type MouseInputHandler = Box<FnMut(ElementState, MouseButton) -> (UiRequest, EventRemainderOld)>;
 
-    // [WINDOW REMOVED]:
-    // pub type KeyboardInputHandler = Box<FnMut(ElementState, Option<VirtualKeyCode>, &KeyboardState, &mut String,
-    //     &mut Window) -> EventRemainder>;
     pub type KeyboardInputHandler = Box<FnMut(ElementState, Option<VirtualKeyCode>, &KeyboardState, 
         &mut String) -> (UiRequest, EventRemainderOld)>;
 
@@ -124,8 +110,6 @@ mod enums {
     pub enum EventRemainderOld {
         None,
         Closed,
-        // RequestKeyboardFocus(bool),
-        // RequestRedraw,
         MousePosition(i32, i32),
         MouseWheel(MouseScrollDelta),
         Custom(Box<CustomEventRemainder>),
@@ -167,7 +151,6 @@ mod enums {
 
 mod functions {
     use glium::glutin::{VirtualKeyCode, ElementState};
-    // use glium::glutin::VirtualKeyCode::*;
     use ui::KeyboardState;
 
     pub fn key_into_string(key_state: ElementState, vk_code: Option<VirtualKeyCode>, kb_state: &KeyboardState, 

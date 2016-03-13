@@ -6,7 +6,6 @@ use glium::glutin::{ElementState, MouseButton, VirtualKeyCode};
 use ui::{Vertex, Shape2d, HandlerOption, UiRequest, KeyboardState, MouseEventHandler, 
     KeyboardEventHandler, EventRemainder};
 use util;
-// use window::{Window};
 use ui::{self, TextAlign, TextBox, Button}; 
 
 pub const ELEMENT_BASE_SCALE: f32 = 0.07;
@@ -178,15 +177,7 @@ impl<'a, R> Element<R> where R: EventRemainder {
             base_scale: (ELEMENT_BASE_SCALE, ELEMENT_BASE_SCALE),
             cur_scale: [0.0, 0.0, 0.0],
             cur_center_pos: [0.0, 0.0, 0.0],        
-            
-            // ***** OLD
-            // border: None,
-            // ***** OLD
-
-            // ***** NEW
             border: border,
-            // **** NEW
-
             mouse_event_handler: HandlerOption::None,
             keyboard_event_handler: HandlerOption::None,
         }
@@ -374,13 +365,6 @@ impl<'a, R> Element<R> where R: EventRemainder {
         &self.text
     }
 
-    // #[allow(dead_code)]
-    // pub fn set_color(&mut self, color: [f32; 3]) {
-    //     for vertex in self.shape.vertices.iter_mut() {
-    //         vertex.set_color(color);
-    //     }
-    // }
-
     /// Sets whether or not the mouse cursor is hovering over this element.
     // [FIXME]: PENDING FUTURE INVESTIGATION:
     // ADDING OR REMOVING A BORDER TO THE LIST OF VERTICES CAUSES A CRASH.
@@ -420,10 +404,6 @@ impl<'a, R> Element<R> where R: EventRemainder {
 
     // [FIXME]: Unused Vars.
     #[allow(unused_variables)]
-    // [WINDOW REMOVED]:
-    // pub fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton, 
-    //             window: &mut Window) -> UiRequest 
-    // {
     pub fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton) -> (UiRequest, R) {
         let mut request = UiRequest::None;
         let mut remainder = R::default();
@@ -440,12 +420,6 @@ impl<'a, R> Element<R> where R: EventRemainder {
 
                     if was_clicked {
                         if let HandlerOption::Fn(ref mut handler) = self.mouse_event_handler {
-                            // [WINDOW REMOVED]:
-                            // match mih(state, button, window) {
-                            // match handler(state, button) {
-                            //     UiRequest::None => (),
-                            //     r @ _ => return r,
-                            // }
                             let handler_ret = handler(state, button);
                             request = handler_ret.0;
                             remainder = handler_ret.1;
@@ -465,39 +439,20 @@ impl<'a, R> Element<R> where R: EventRemainder {
     // [FIXME]: Unused Vars.
     // [FIXME]: Error message (set up result type).
     #[allow(unused_variables)]
-    // [WINDOW REMOVED]:
-    // pub fn handle_keyboard_input(&mut self, key_state: ElementState, vk_code: Option<VirtualKeyCode>, 
-    //             kb_state: &KeyboardState, window: &mut Window) -> UiRequest 
-    // {
     pub fn handle_keyboard_input(&mut self, key_state: ElementState, vk_code: Option<VirtualKeyCode>, 
                 kb_state: &KeyboardState) -> (UiRequest, R)
     {
         let (request, remainder) = match self.keyboard_event_handler {
-            // [WINDOW REMOVED]:
-            // HandlerOption::Fn(ref mut kih) => kih(key_state, vk_code, kb_state, &mut self.text.string, window),
             HandlerOption::Fn(ref mut handler) => {
                 handler(key_state, vk_code, kb_state, &mut self.text.string)
             },
             HandlerOption::Sub(ele_idx) => {
                 assert!(ele_idx < self.sub_elements.len(), "{}Element::handle_keyboard_input(): {}:{}",
                     module_path!(), column!(), line!());
-                // print!("        Passing keyboard input, '{:?}::{:?}', to sub element '{}' --->", 
-                //     key_state, vk_code, ele_idx);
-                // [WINDOW REMOVED]:
-                // self.sub_elements[ele_idx].handle_keyboard_input(key_state, vk_code, kb_state, window);
                 self.sub_elements[ele_idx].handle_keyboard_input(key_state, vk_code, kb_state)
             },
             _ => (UiRequest::None, R::default()),
         };
-
-        // match request {
-        //     UiRequest::PushTextString(c) => {
-        //         // println!("        UiRequest: {}", c);
-        //         self.text.string.push(c);
-        //     },
-        //     UiRequest::PopTextString => { self.text.string.pop(); },
-        //     _ => (),
-        // }
 
         (request, remainder)
     }
