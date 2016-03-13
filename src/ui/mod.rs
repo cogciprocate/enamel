@@ -17,14 +17,14 @@ pub use self::pane::Pane;
 pub use self::shape_2d::Shape2d;
 // pub use self::text_properties::TextProperties;
 pub use self::vertex::Vertex;
-pub use self::traits::{CustomEventResult};
+pub use self::traits::{CustomEventRemainder};
 pub use self::types::{MouseInputHandler, KeyboardInputHandler};
-pub use self::enums::{TextAlign, EventResult, HandlerOption};
+pub use self::enums::{TextAlign, UiRequest, EventRemainder, HandlerOption};
 pub use self::functions::{ key_into_string };
 // pub use self::traits::HandlerWindow;
 
 
-pub use glium::glutin::{ElementState, MouseButton, MouseScrollDelta};
+// pub use glium::glutin::{ElementState, MouseButton, MouseScrollDelta};
 
 pub const C_PINK: [f32; 4] = [0.990, 0.490, 0.700, 1.0];
 pub const C_ORANGE: [f32; 4] = [0.960, 0.400, 0.0, 1.0];
@@ -42,127 +42,78 @@ mod traits {
 
     // }
 
-    pub trait CustomEventResult: CustomEventResultClone {}
+    pub trait CustomEventRemainder: CustomEventRemainderClone {}
 
-    pub trait CustomEventResultClone {
-        fn clone_box(&self) -> Box<CustomEventResult>;
+    pub trait CustomEventRemainderClone {
+        fn clone_box(&self) -> Box<CustomEventRemainder>;
     }
 
-    impl<T> CustomEventResultClone for T where T: 'static + CustomEventResult + Clone {
-        fn clone_box(&self) -> Box<CustomEventResult> {
+    impl<T> CustomEventRemainderClone for T where T: 'static + CustomEventRemainder + Clone {
+        fn clone_box(&self) -> Box<CustomEventRemainder> {
             Box::new(self.clone())
         }
     }
 
-    impl Clone for Box<CustomEventResult> {
-        fn clone(&self) -> Box<CustomEventResult> {
+    impl Clone for Box<CustomEventRemainder> {
+        fn clone(&self) -> Box<CustomEventRemainder> {
             self.clone_box()
         }
     }
-
-    // trait Animal: AnimalClone {
-    //     fn speak(&self);
-    // }
-
-    // // Splitting AnimalClone into its own trait allows us to provide a blanket
-    // // implementation for all compatible types, without having to implement the
-    // // rest of Animal.  In this case, we implement it for all types that have
-    // // 'static lifetime (*i.e.* they don't contain non-'static pointers), and
-    // // implement both Animal and Clone.  Don't ask me how the compiler resolves
-    // // implementing AnimalClone for Animal when Animal requires AnimalClone; I
-    // // have *no* idea why this works.
-    // trait AnimalClone {
-    //     fn clone_box(&self) -> Box<Animal>;
-    // }
-
-    // impl<T> AnimalClone for T where T: 'static + Animal + Clone {
-    //     fn clone_box(&self) -> Box<Animal> {
-    //         Box::new(self.clone())
-    //     }
-    // }
-
-    // // We can now implement Clone manually by forwarding to clone_box.
-    // impl Clone for Box<Animal> {
-    //     fn clone(&self) -> Box<Animal> {
-    //         self.clone_box()
-    //     }
-    // }
-
-    // #[derive(Clone)]
-    // struct Dog {
-    //     name: String,
-    // }
-
-    // impl Dog {
-    //     fn new(name: &str) -> Dog {
-    //         return Dog { name: name.to_string() }
-    //     }
-    // }
-
-    // impl Animal for Dog {
-    //     fn speak(&self) {
-    //         println!("{}: ruff, ruff!", self.name);
-    //     }
-    // }
-
-    // #[derive(Clone)]
-    // struct AnimalHouse {
-    //     animal: Box<Animal>,
-    // }
-
-    // fn main() {
-    //     let house = AnimalHouse { animal: Box::new(Dog::new("Bobby")) };
-    //     let house2 = house.clone();
-    //     house2.animal.speak();
-    // }
 }
 
 
 mod types {
     use glium::glutin::{ElementState, MouseButton, VirtualKeyCode};
-    use ui::{EventResult, KeyboardState};
+    use ui::{EventRemainder, UiRequest, KeyboardState};
     // [WINDOW REMOVED]:
     // use window::Window;
 
     // [WINDOW REMOVED]:
     // pub type MouseInputHandler = Box<FnMut(ElementState, MouseButton, 
-    //     &mut Window) -> EventResult>;
-    pub type MouseInputHandler = Box<FnMut(ElementState, MouseButton) -> EventResult>;
+    //     &mut Window) -> EventRemainder>;
+    pub type MouseInputHandler = Box<FnMut(ElementState, MouseButton) -> (UiRequest, EventRemainder)>;
 
     // [WINDOW REMOVED]:
     // pub type KeyboardInputHandler = Box<FnMut(ElementState, Option<VirtualKeyCode>, &KeyboardState, &mut String,
-    //     &mut Window) -> EventResult>;
+    //     &mut Window) -> EventRemainder>;
     pub type KeyboardInputHandler = Box<FnMut(ElementState, Option<VirtualKeyCode>, &KeyboardState, 
-        &mut String) -> EventResult>;
+        &mut String) -> (UiRequest, EventRemainder)>;
 }
 
 
 mod enums {
     use std::fmt::{Debug, Formatter, Error};
-    use ui::CustomEventResult;
+    use ui::CustomEventRemainder;
     use glium::glutin::MouseScrollDelta;
 
-    pub enum TextAlign {
-        Center,
-        Left,
-        Right,
+    #[derive(Clone)]
+    pub enum UiRequest {
+        None,
+        Redraw,
+        KeyboardFocus(bool),
     }
 
     #[derive(Clone)]
-    pub enum EventResult {
+    pub enum EventRemainder {
         None,
         Closed,
-        RequestKeyboardFocus(bool),
-        RequestRedraw,
+        // RequestKeyboardFocus(bool),
+        // RequestRedraw,
         MousePosition(i32, i32),
         MouseWheel(MouseScrollDelta),
-        Custom(Box<CustomEventResult>),
+        Custom(Box<CustomEventRemainder>),
     }
 
     pub enum HandlerOption<T> {
         None,
         Fn(T),
         Sub(usize),    
+    }
+
+    pub enum TextAlign {
+        Center,
+        Left,
+        Right,
     }
 
     impl<T> HandlerOption<T> {

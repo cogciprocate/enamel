@@ -3,8 +3,8 @@
 use glium::Surface;
 use glium_text::{self, TextSystem, FontTexture, TextDisplay};
 use glium::glutin::{ElementState, MouseButton, VirtualKeyCode};
-use ui::{Vertex, Shape2d, HandlerOption, MouseInputHandler, 
-    KeyboardInputHandler, EventResult, KeyboardState,};
+use ui::{Vertex, Shape2d, HandlerOption, MouseInputHandler, EventRemainder,
+    KeyboardInputHandler, UiRequest, KeyboardState,};
 use util;
 // use window::{Window};
 use ui::{self, TextAlign, TextBox, Button}; 
@@ -23,7 +23,6 @@ pub const TEXT_BASE_SCALE: f32 = 0.39;
 //   current screen state (such as its size) and is used as a cached value.
 // * 'idz' is, as always, the index of item[0] within a larger set (think
 //   memory location).
-
 
 
 pub struct ElementText {
@@ -86,13 +85,6 @@ impl ElementText {
     // }
 }
 
-
-
-
-
-// pub struct ElementBorderToggle {
-
-// }
 
 pub struct ElementBorder {
     thickness: f32,
@@ -430,38 +422,44 @@ impl<'a> Element {
     #[allow(unused_variables)]
     // [WINDOW REMOVED]:
     // pub fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton, 
-    //             window: &mut Window) -> EventResult 
+    //             window: &mut Window) -> UiRequest 
     // {
-    pub fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton) -> EventResult {
-        let mut result = EventResult::None;
+    pub fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton) -> (UiRequest, EventRemainder) {
+        let mut request = UiRequest::None;
+        let mut remainder = EventRemainder::None;
 
         if let MouseButton::Left = button {
             match state {
                 ElementState::Pressed => {
                     self.depress(true);
-                    result = EventResult::RequestRedraw;
+                    request = UiRequest::Redraw;
                 },
                 ElementState::Released => {
                     let was_clicked = self.is_depressed;
                     self.depress(false);
 
                     if was_clicked {
-                        if let HandlerOption::Fn(ref mut mih) = self.mouse_input_handler {
+                        if let HandlerOption::Fn(ref mut handler) = self.mouse_input_handler {
                             // [WINDOW REMOVED]:
                             // match mih(state, button, window) {
-                            match mih(state, button) {
-                                EventResult::None => (),
-                                r @ _ => return r,
-                            }
+                            // match handler(state, button) {
+                            //     UiRequest::None => (),
+                            //     r @ _ => return r,
+                            // }
+                            let handler_ret = handler(state, button);
+                            request = handler_ret.0;
+                            remainder = handler_ret.1;
+                        } else {
+                            request = UiRequest::Redraw;
                         }
-                    }                    
-
-                    result = EventResult::RequestRedraw;
+                    } else {
+                        request = UiRequest::Redraw;
+                    }
                 },
             }
         }
 
-        result
+        (request, remainder)
     }
 
     // [FIXME]: Unused Vars.
@@ -469,15 +467,17 @@ impl<'a> Element {
     #[allow(unused_variables)]
     // [WINDOW REMOVED]:
     // pub fn handle_keyboard_input(&mut self, key_state: ElementState, vk_code: Option<VirtualKeyCode>, 
-    //             kb_state: &KeyboardState, window: &mut Window) -> EventResult 
+    //             kb_state: &KeyboardState, window: &mut Window) -> UiRequest 
     // {
     pub fn handle_keyboard_input(&mut self, key_state: ElementState, vk_code: Option<VirtualKeyCode>, 
-                kb_state: &KeyboardState) -> EventResult 
+                kb_state: &KeyboardState) -> (UiRequest, EventRemainder)
     {
-        let result = match self.keyboard_input_handler {
+        let (request, remainder) = match self.keyboard_input_handler {
             // [WINDOW REMOVED]:
             // HandlerOption::Fn(ref mut kih) => kih(key_state, vk_code, kb_state, &mut self.text.string, window),
-            HandlerOption::Fn(ref mut kih) => kih(key_state, vk_code, kb_state, &mut self.text.string),
+            HandlerOption::Fn(ref mut handler) => {
+                handler(key_state, vk_code, kb_state, &mut self.text.string)
+            },
             HandlerOption::Sub(ele_idx) => {
                 assert!(ele_idx < self.sub_elements.len(), "{}Element::handle_keyboard_input(): {}:{}",
                     module_path!(), column!(), line!());
@@ -487,21 +487,21 @@ impl<'a> Element {
                 // self.sub_elements[ele_idx].handle_keyboard_input(key_state, vk_code, kb_state, window);
                 self.sub_elements[ele_idx].handle_keyboard_input(key_state, vk_code, kb_state);
 
-                EventResult::None
+                (UiRequest::None, EventRemainder::None)
             },
-            _ => EventResult::None,
+            _ => (UiRequest::None, EventRemainder::None),
         };
 
-        // match result {
-        //     EventResult::PushTextString(c) => {
-        //         // println!("        EventResult: {}", c);
+        // match request {
+        //     UiRequest::PushTextString(c) => {
+        //         // println!("        UiRequest: {}", c);
         //         self.text.string.push(c);
         //     },
-        //     EventResult::PopTextString => { self.text.string.pop(); },
+        //     UiRequest::PopTextString => { self.text.string.pop(); },
         //     _ => (),
         // }
 
-        result
+        (request, remainder)
     }
 
     fn depress(&mut self, depress: bool) {

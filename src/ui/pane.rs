@@ -6,7 +6,7 @@ use glium::{self, VertexBuffer, IndexBuffer, Program, DrawParameters, Surface};
 use glium::vertex::{EmptyInstanceAttributes as EIAttribs};
 use glium::glutin::{ElementState, MouseButton, Event, VirtualKeyCode};
 // use window::{Window, };
-use ui::{self, Vertex, Element, MouseState, KeyboardState, EventResult};
+use ui::{self, Vertex, Element, MouseState, KeyboardState, EventRemainder, UiRequest};
 
 const TWOSR3: f32 = 1.15470053838;
 const DEFAULT_UI_SCALE: f32 = 0.9;
@@ -129,18 +129,18 @@ impl<'d> Pane<'d> {
         }
     }
 
-    pub fn handle_event(&mut self, event: Event) -> EventResult {
+    pub fn handle_event(&mut self, event: Event) -> EventRemainder {
         // use glium::glutin::Event::{Closed, Resized, KeyboardInput, MouseInput, MouseMoved};
         // use glium::glutin::ElementState::{Released, Pressed};
 
         match event {
             Event::Closed => {                    
                 // window.close_pending = true;
-                EventResult::Closed
+                EventRemainder::Closed
             },
             Event::Resized(..) => {
                 self.refresh_vertices();
-                EventResult::None
+                EventRemainder::None
             },
             Event::KeyboardInput(key_state, _, vk_code) => {
                 // [WINDOW REMOVED]:
@@ -158,15 +158,15 @@ impl<'d> Pane<'d> {
                 self.mouse_state.update_position(p);
                 // [WINDOW REMOVED]:
                 // window.handle_mouse_moved(&self.mouse_state);
-                EventResult::MousePosition(p.0, p.1)
+                EventRemainder::MousePosition(p.0, p.1)
             },
             Event::MouseWheel(scroll_delta) => {
                 // let _ = touch_phase;
                 // [WINDOW REMOVED]:
                 // window.handle_mouse_wheel(scroll_delta);
-                EventResult::MouseWheel(scroll_delta)
+                EventRemainder::MouseWheel(scroll_delta)
             },
-            _ => EventResult::None
+            _ => EventRemainder::None
         }
     }
     
@@ -175,7 +175,7 @@ impl<'d> Pane<'d> {
     //             window: &mut Window) 
     // {
     fn handle_keyboard_input(&mut self, key_state: ElementState, vk_code: Option<VirtualKeyCode>) 
-            -> EventResult
+            -> EventRemainder
     {
         // Update keyboard state (modifiers, etc.):
         self.keybd_state.update(key_state, vk_code);
@@ -188,14 +188,14 @@ impl<'d> Pane<'d> {
             //         match vkc {
             //             // [WINDOW REMOVED]:
             //             // Q => window.close_pending = true,
-            //             VirtualKeyCode::Q => EventResult::Closed,
-            //             _ => EventResult::None,
+            //             VirtualKeyCode::Q => EventRemainder::Closed,
+            //             _ => EventRemainder::None,
             //         }
             //     } else {
-            //         EventResult::None
+            //         EventRemainder::None
             //     }
             // } else {
-            //     EventResult::None
+            //     EventRemainder::None
             // }
 
             // 'Control' is down:
@@ -204,14 +204,14 @@ impl<'d> Pane<'d> {
                     match vk_code {
                         Some(vkc) => {
                             match vkc {
-                                VirtualKeyCode::Q => EventResult::Closed,
-                                _ => EventResult::None,
+                                VirtualKeyCode::Q => EventRemainder::Closed,
+                                _ => EventRemainder::None,
                             }
                         },
-                        None => EventResult::None,
+                        None => EventRemainder::None,
                     }
                 },
-                _ => EventResult::None,
+                _ => EventRemainder::None,
             }
         } else {
             // No modifiers:
@@ -219,27 +219,29 @@ impl<'d> Pane<'d> {
             if let Some(ele_idx) = self.keybd_focused {
                 // [WINDOW REMOVED]:
                 // self.elements[ele_idx].handle_keyboard_input(key_state, vk_code, &self.keybd_state, window);
-                self.elements[ele_idx].handle_keyboard_input(key_state, vk_code, &self.keybd_state)
+                let (request, remainder) = self.elements[ele_idx]
+                    .handle_keyboard_input(key_state, vk_code, &self.keybd_state);
+                remainder
             } else {
-                EventResult::None
+                EventRemainder::None
             }
         }
     }
 
-    fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton) -> EventResult {
-        // let mut event_result = EventResult::None;
+    fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton) -> EventRemainder {
+        // let mut event_result = EventRemainder::None;
 
         match self.mouse_focused {
             Some(ele_idx) => {
                 // [WINDOW REMOVED]:
                 // match self.elements[ele_idx].handle_mouse_input(state, button, window) {
-                let event_result = self.elements[ele_idx].handle_mouse_input(state, button);
+                let (request, remainder) = self.elements[ele_idx].handle_mouse_input(state, button);
 
                 // If element returns a request we can handle, return
-                // `EventResult::None`. Otherwise, return the original
+                // `EventRemainder::None`. Otherwise, return the original
                 // request.
-                match event_result.clone() {
-                    EventResult::RequestKeyboardFocus(on_off) => {
+                match request.clone() {
+                    UiRequest::KeyboardFocus(on_off) => {
                         if on_off {                             
                             self.keybd_focused = Some(ele_idx);
                             self.elements[ele_idx].set_keybd_focus(true);
@@ -249,13 +251,13 @@ impl<'d> Pane<'d> {
                         }
 
                         self.refresh_vertices();
-                        EventResult::None
+                        EventRemainder::None
                     },
-                    EventResult::RequestRedraw => {
+                    UiRequest::Redraw => {
                         self.refresh_vertices();
-                        EventResult::None
+                        EventRemainder::None
                     },
-                    _ => event_result,
+                    _ => remainder,
                 }
             },
             None => {
@@ -269,7 +271,7 @@ impl<'d> Pane<'d> {
                     None => None,
                 };
 
-                EventResult::None
+                EventRemainder::None
             }
         }
 
