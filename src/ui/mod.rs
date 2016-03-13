@@ -17,9 +17,9 @@ pub use self::pane::Pane;
 pub use self::shape_2d::Shape2d;
 // pub use self::text_properties::TextProperties;
 pub use self::vertex::Vertex;
-pub use self::traits::{CustomEventRemainder};
-pub use self::types::{MouseInputHandler, KeyboardInputHandler};
-pub use self::enums::{TextAlign, UiRequest, EventRemainder, HandlerOption};
+pub use self::traits::{CustomEventRemainder, EventRemainder};
+pub use self::types::{MouseInputHandler, KeyboardInputHandler, MouseEventHandler, KeyboardEventHandler};
+pub use self::enums::{TextAlign, UiRequest, EventRemainderOld, HandlerOption};
 pub use self::functions::{ key_into_string };
 // pub use self::traits::HandlerWindow;
 
@@ -37,15 +37,25 @@ pub const SUBSUBDEPTH: f32 = 0.000244140625;
 
 // Implement this one day. Just a type which has some data for the handlers to use.
 mod traits {
-    // use std::fmt::Debug;
-    // pub trait HandlerWindow {
+    use std::fmt::{Debug, Formatter, Result as FmtResult};
+    use std::default::Default;
+    use glium::glutin::MouseScrollDelta;
+    // pub trait HandlerWindow {}
 
-    // }
+    pub trait EventRemainder: Clone + Debug + Default {
+        fn closed() -> Self;
+        fn mouse_moved((i32, i32)) -> Self;
+        fn mouse_wheel(MouseScrollDelta) -> Self;
+    }
 
-    pub trait CustomEventRemainder: CustomEventRemainderClone {}
+    pub trait CustomEventRemainder: CustomEventRemainderClone + CustomEventRemainderDebug {}
 
     pub trait CustomEventRemainderClone {
         fn clone_box(&self) -> Box<CustomEventRemainder>;
+    }
+
+    pub trait CustomEventRemainderDebug {
+        fn debug_fmt(&self, &mut Formatter) -> FmtResult;
     }
 
     impl<T> CustomEventRemainderClone for T where T: 'static + CustomEventRemainder + Clone {
@@ -54,9 +64,21 @@ mod traits {
         }
     }
 
+    impl<T> CustomEventRemainderDebug for T where T: 'static + CustomEventRemainder + Debug {
+        fn debug_fmt(&self, f: &mut Formatter) -> FmtResult {
+            self.fmt(f)
+        }
+    }
+
     impl Clone for Box<CustomEventRemainder> {
         fn clone(&self) -> Box<CustomEventRemainder> {
             self.clone_box()
+        }
+    }
+
+    impl Debug for Box<CustomEventRemainder> {
+        fn fmt(&self, f: &mut Formatter) -> FmtResult {
+            (*self).debug_fmt(f)
         }
     }
 }
@@ -64,20 +86,25 @@ mod traits {
 
 mod types {
     use glium::glutin::{ElementState, MouseButton, VirtualKeyCode};
-    use ui::{EventRemainder, UiRequest, KeyboardState};
+    use ui::{EventRemainderOld, UiRequest, KeyboardState};
     // [WINDOW REMOVED]:
     // use window::Window;
 
     // [WINDOW REMOVED]:
     // pub type MouseInputHandler = Box<FnMut(ElementState, MouseButton, 
     //     &mut Window) -> EventRemainder>;
-    pub type MouseInputHandler = Box<FnMut(ElementState, MouseButton) -> (UiRequest, EventRemainder)>;
+    pub type MouseInputHandler = Box<FnMut(ElementState, MouseButton) -> (UiRequest, EventRemainderOld)>;
 
     // [WINDOW REMOVED]:
     // pub type KeyboardInputHandler = Box<FnMut(ElementState, Option<VirtualKeyCode>, &KeyboardState, &mut String,
     //     &mut Window) -> EventRemainder>;
     pub type KeyboardInputHandler = Box<FnMut(ElementState, Option<VirtualKeyCode>, &KeyboardState, 
-        &mut String) -> (UiRequest, EventRemainder)>;
+        &mut String) -> (UiRequest, EventRemainderOld)>;
+
+    pub type MouseEventHandler<T> = Box<FnMut(ElementState, MouseButton) -> (UiRequest, T)>;
+
+    pub type KeyboardEventHandler<T> = Box<FnMut(ElementState, Option<VirtualKeyCode>, &KeyboardState, 
+        &mut String) -> (UiRequest, T)>;
 }
 
 
@@ -94,7 +121,7 @@ mod enums {
     }
 
     #[derive(Clone)]
-    pub enum EventRemainder {
+    pub enum EventRemainderOld {
         None,
         Closed,
         // RequestKeyboardFocus(bool),

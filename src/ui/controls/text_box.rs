@@ -1,15 +1,15 @@
 // use super::{};
 // use util;
 
-use ui::{self, Shape2d, Element, ElementKind, KeyboardInputHandler};
+use ui::{self, Shape2d, Element, ElementKind, KeyboardEventHandler, EventRemainder};
 
 pub struct TextBox;
 
 impl TextBox {
-    pub fn new(anchor_pos: [f32; 3], offset: (f32, f32), extra_width: f32,
+    pub fn new<R>(anchor_pos: [f32; 3], offset: (f32, f32), extra_width: f32,
                 label: &str, color: [f32; 4], sub_text_string: &str, 
-                key_handler: KeyboardInputHandler) 
-            -> Element
+                key_handler: KeyboardEventHandler<R>) 
+            -> Element<R> where R: EventRemainder
     {
         let shape = Shape2d::hexagon_panel(1.0, extra_width, 0.0, color);
 
@@ -24,8 +24,8 @@ impl TextBox {
 pub struct TextField;
 
 impl TextField {
-    pub fn new(anchor_pos: [f32; 3], offset: (f32, f32), width: f32, text_string: &str,
-                key_handler: KeyboardInputHandler) -> Element
+    pub fn new<R>(anchor_pos: [f32; 3], offset: (f32, f32), width: f32, text_string: &str,
+                key_handler: KeyboardEventHandler<R>) -> Element<R> where R: EventRemainder
     {
         let color = [1.0, 1.0, 1.0, 1.0];
         let shape = Shape2d::rectangle(0.8, width + 2.4, -0.1, color);
@@ -41,6 +41,6 @@ impl TextField {
             .border(0.05, ui::C_BLACK, false)
             .text_offset(text_offset)
             .text_string(text_string)
-            .keyboard_input_handler(key_handler)
+            .keyboard_event_handler(key_handler)
     }
 }

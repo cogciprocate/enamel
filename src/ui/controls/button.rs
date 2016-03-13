@@ -1,5 +1,5 @@
 
-use ui::{Shape2d, Element, ElementKind};
+use ui::{Shape2d, Element, ElementKind, EventRemainder};
 
 pub struct Button {
     is_depressed: bool,
@@ -23,8 +23,8 @@ impl Button {
 pub struct HexButton;
 
 impl HexButton {
-    pub fn new(anchor_pos: [f32; 3], offset: (f32, f32), extra_width: f32,
-            text: &str, color: [f32; 4]) -> Element
+    pub fn new<R>(anchor_pos: [f32; 3], offset: (f32, f32), extra_width: f32,
+            text: &str, color: [f32; 4]) -> Element<R> where R: EventRemainder
     {
         let shape = Shape2d::hexagon_panel(1.0, extra_width, 0.0, color);
 

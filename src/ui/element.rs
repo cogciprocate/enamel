@@ -3,8 +3,8 @@
 use glium::Surface;
 use glium_text::{self, TextSystem, FontTexture, TextDisplay};
 use glium::glutin::{ElementState, MouseButton, VirtualKeyCode};
-use ui::{Vertex, Shape2d, HandlerOption, MouseInputHandler, EventRemainder,
-    KeyboardInputHandler, UiRequest, KeyboardState,};
+use ui::{Vertex, Shape2d, HandlerOption, UiRequest, KeyboardState, MouseEventHandler, 
+    KeyboardEventHandler, EventRemainder};
 use util;
 // use window::{Window};
 use ui::{self, TextAlign, TextBox, Button}; 
@@ -134,10 +134,10 @@ impl ElementKind {
 // [FIXME]: TODO: 
 // - Revamp 'new()' into builder style functions.
 // - Clean up and consolidate stored positions, scales, etc.
-pub struct Element {
+pub struct Element<R> where R: EventRemainder {
     kind: ElementKind,
     text: ElementText,
-    sub_elements: Vec<Element>,    
+    sub_elements: Vec<Element<R>>,    
     shape: Shape2d,
     is_depressed: bool,
     has_mouse_focus: bool,
@@ -148,14 +148,14 @@ pub struct Element {
     cur_scale: [f32; 3],
     cur_center_pos: [f32; 3],        
     border: Option<ElementBorder>,
-    mouse_input_handler: HandlerOption<MouseInputHandler>,
-    keyboard_input_handler: HandlerOption<KeyboardInputHandler>,
+    mouse_event_handler: HandlerOption<MouseEventHandler<R>>,
+    keyboard_event_handler: HandlerOption<KeyboardEventHandler<R>>,
 }
 
-impl<'a> Element {
+impl<'a, R> Element<R> where R: EventRemainder {
     // [FIXME]: TODO: Sort out the whole dual border color/thickness issue (create a ::new()).
     pub fn new(kind: ElementKind, anchor_point: [f32; 3], anchor_ofs: [f32; 3], shape: Shape2d,
-            ) -> Element
+            ) -> Element<R>
     {
         verify_position(anchor_point);
 
@@ -187,38 +187,38 @@ impl<'a> Element {
             border: border,
             // **** NEW
 
-            mouse_input_handler: HandlerOption::None,
-            keyboard_input_handler: HandlerOption::None,
+            mouse_event_handler: HandlerOption::None,
+            keyboard_event_handler: HandlerOption::None,
         }
     }
 
-    pub fn mouse_input_handler(mut self, mouse_input_handler: MouseInputHandler) -> Element {
-        self.mouse_input_handler = HandlerOption::Fn(mouse_input_handler);
+    pub fn mouse_event_handler(mut self, mouse_event_handler: MouseEventHandler<R>) -> Element<R> {
+        self.mouse_event_handler = HandlerOption::Fn(mouse_event_handler);
         self
     }
 
-    pub fn keyboard_input_handler(mut self, keyboard_input_handler: KeyboardInputHandler) -> Element {
-        if let HandlerOption::None = self.keyboard_input_handler {
-                self.keyboard_input_handler = HandlerOption::Fn(keyboard_input_handler);
+    pub fn keyboard_event_handler(mut self, keyboard_event_handler: KeyboardEventHandler<R>) -> Element<R> {
+        if let HandlerOption::None = self.keyboard_event_handler {
+                self.keyboard_event_handler = HandlerOption::Fn(keyboard_event_handler);
                 self
         } else {
-            panic!("Element::keyboard_input_handler(): Keyboard input already assigned \
-                to: '{:?}'", self.keyboard_input_handler);
+            panic!("Element::keyboard_event_handler(): Keyboard input already assigned \
+                to: '{:?}'", self.keyboard_event_handler);
         }
     }
 
-    pub fn sub(mut self, mut sub_element: Element) -> Element {
+    pub fn sub(mut self, mut sub_element: Element<R>) -> Element<R> {
         sub_element.anchor_point[2] += ui::SUBDEPTH;
         self.sub_elements.reserve_exact(1);
 
-        if sub_element.keyboard_input_handler.is_some() {
-            if let HandlerOption::None = self.keyboard_input_handler {
+        if sub_element.keyboard_event_handler.is_some() {
+            if let HandlerOption::None = self.keyboard_event_handler {
                 let next_sub_ele_idx = self.sub_elements.len();
-                self.keyboard_input_handler = HandlerOption::Sub(next_sub_ele_idx);
+                self.keyboard_event_handler = HandlerOption::Sub(next_sub_ele_idx);
             } else {
                 panic!("Element::sub(): Cannot assign a sub-element to handle keyboard \
                     input if it has already been assigned. Current assignment: '{:?}'."
-                    , self.keyboard_input_handler);
+                    , self.keyboard_event_handler);
             }
         }
         
@@ -226,22 +226,22 @@ impl<'a> Element {
         self
     }
 
-    pub fn text_string(mut self, text_string: &str) -> Element {
+    pub fn text_string(mut self, text_string: &str) -> Element<R> {
         self.text.string = text_string.to_string();
         self
     }
 
-    pub fn text_color(mut self, color: (f32, f32, f32, f32)) -> Element {
+    pub fn text_color(mut self, color: (f32, f32, f32, f32)) -> Element<R> {
         self.text.color = color;
         self
     }
 
-    pub fn text_offset(mut self, element_offset: (f32, f32)) -> Element {
+    pub fn text_offset(mut self, element_offset: (f32, f32)) -> Element<R> {
         self.text.element_offset = element_offset;
         self
     }
 
-    pub fn border(mut self, thickness: f32, color: [f32; 4], is_visible: bool) -> Element {
+    pub fn border(mut self, thickness: f32, color: [f32; 4], is_visible: bool) -> Element<R> {
         self.border = Some(ElementBorder { thickness: thickness, color: color, 
             is_visible: is_visible, shape: self.shape.as_border(thickness, color)});
         self
@@ -411,7 +411,7 @@ impl<'a> Element {
     pub fn set_keybd_focus(&mut self, has_focus: bool) {
         self.has_keybd_focus = has_focus;
 
-        if let HandlerOption::Sub(ele_idx) = self.keyboard_input_handler {
+        if let HandlerOption::Sub(ele_idx) = self.keyboard_event_handler {
             if let Some(ref mut border) = self.sub_elements[ele_idx].border {
                 border.is_visible = has_focus;
             }
@@ -424,9 +424,9 @@ impl<'a> Element {
     // pub fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton, 
     //             window: &mut Window) -> UiRequest 
     // {
-    pub fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton) -> (UiRequest, EventRemainder) {
+    pub fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton) -> (UiRequest, R) {
         let mut request = UiRequest::None;
-        let mut remainder = EventRemainder::None;
+        let mut remainder = R::default();
 
         if let MouseButton::Left = button {
             match state {
@@ -439,7 +439,7 @@ impl<'a> Element {
                     self.depress(false);
 
                     if was_clicked {
-                        if let HandlerOption::Fn(ref mut handler) = self.mouse_input_handler {
+                        if let HandlerOption::Fn(ref mut handler) = self.mouse_event_handler {
                             // [WINDOW REMOVED]:
                             // match mih(state, button, window) {
                             // match handler(state, button) {
@@ -470,9 +470,9 @@ impl<'a> Element {
     //             kb_state: &KeyboardState, window: &mut Window) -> UiRequest 
     // {
     pub fn handle_keyboard_input(&mut self, key_state: ElementState, vk_code: Option<VirtualKeyCode>, 
-                kb_state: &KeyboardState) -> (UiRequest, EventRemainder)
+                kb_state: &KeyboardState) -> (UiRequest, R)
     {
-        let (request, remainder) = match self.keyboard_input_handler {
+        let (request, remainder) = match self.keyboard_event_handler {
             // [WINDOW REMOVED]:
             // HandlerOption::Fn(ref mut kih) => kih(key_state, vk_code, kb_state, &mut self.text.string, window),
             HandlerOption::Fn(ref mut handler) => {
@@ -485,11 +485,9 @@ impl<'a> Element {
                 //     key_state, vk_code, ele_idx);
                 // [WINDOW REMOVED]:
                 // self.sub_elements[ele_idx].handle_keyboard_input(key_state, vk_code, kb_state, window);
-                self.sub_elements[ele_idx].handle_keyboard_input(key_state, vk_code, kb_state);
-
-                (UiRequest::None, EventRemainder::None)
+                self.sub_elements[ele_idx].handle_keyboard_input(key_state, vk_code, kb_state)
             },
-            _ => (UiRequest::None, EventRemainder::None),
+            _ => (UiRequest::None, R::default()),
         };
 
         // match request {
