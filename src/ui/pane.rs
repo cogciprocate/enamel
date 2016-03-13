@@ -4,7 +4,7 @@ use glium::backend::glutin_backend::GlutinFacade;
 use glium::{self, VertexBuffer, IndexBuffer, Program, DrawParameters, Surface};
 use glium::vertex::{EmptyInstanceAttributes as EIAttribs};
 use glium::glutin::{ElementState, MouseButton, Event, VirtualKeyCode};
-use ui::{self, Vertex, Element, MouseState, KeyboardState, UiRequest, EventRemainder};
+use ui::{self, Vertex, Element, MouseState, KeyboardState, UiRequest, EventRemainder, SetFocus};
 
 const TWOSR3: f32 = 1.15470053838;
 const DEFAULT_UI_SCALE: f32 = 0.9;
@@ -104,26 +104,36 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
         self
     }
 
-    /// Recalculates positions of vertices and updates any other properties such as color.
-    // [FIXME]: Make something which doesn't need to rewrite every vertex. 
-    //             Perhaps add an optional element index parameter.
-    pub fn refresh_vertices(&mut self) {
-        match self.vbo {
-            Some(ref mut vbo) => {
-                let mut vertices: Vec<Vertex> = Vec::with_capacity(vbo.len());
+    pub fn draw<S, B>(&mut self, target: &mut S, background: Option<&mut B>) 
+            where S: Surface, B: SetFocus 
+    {
+        if self.vbo.is_none() || self.ibo.is_none() { 
+            panic!("Ui::draw(): Buffers not initialized.") 
+        }
 
-                for element in self.elements.iter_mut() {
+        let model_color = ui::C_ORANGE;
 
-                    vertices.extend_from_slice(&element.vertices(
-                        self.display.get_framebuffer_dimensions(), self.scale,
-                    ));
-                }
+        // Uniforms:
+        let uniforms = uniform! {
+            u_model_color: model_color,
+        };
 
-                vbo.write(&vertices);
-            },
+        // Update mouse focus:
+        self.update_mouse_focus(target.get_dimensions(), background);
 
-            None => panic!("Ui::resize(): Cannot refresh until Ui has been \
-                initialized with .init()"),
+        // Draw elements:
+        target.draw((self.vbo.as_ref().unwrap(), EIAttribs { len: 1 }), self.ibo.as_ref().unwrap(), 
+            &self.program, &uniforms, &self.params).unwrap();
+
+        // Draw element text:
+        for element in self.elements.iter() {
+            element.draw_text(&self.text_system, target, &self.font_texture);
+
+            let text_display = TextDisplay::new(&self.text_system, &self.font_texture, 
+                element.get_text());
+
+            glium_text::draw(&text_display, &self.text_system, target, 
+                element.text_matrix(), element.text().get_color());
         }
     }
 
@@ -137,9 +147,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                 R::default()
             },
             Event::KeyboardInput(key_state, _, vk_code) => {
-                let res = self.handle_keyboard_input(key_state, vk_code);
-                println!("PANE::HANDLE_EVENT(): returning: {:?}", res);
-                res
+                self.handle_keyboard_input(key_state, vk_code)
             },
             Event::MouseInput(state, button) => {
                 self.mouse_state.update_button(button, state);
@@ -185,7 +193,6 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
             if let Some(ele_idx) = self.keybd_focused {
                 let (request, remainder) = self.elements[ele_idx].handle_keyboard_input(
                     key_state, vk_code, &self.keybd_state);
-                println!("PANE::HANDLE_KEYBOARD_INPUT(): returning: {:?}", remainder);
                 remainder
             } else {
                 R::default()
@@ -194,8 +201,8 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
     }
 
     fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton) -> R {
-        // let mut event_result = R::default();
-
+        // Determine if any elements currently have mouse focus and will be
+        // handling the input event, if not, send up to the consumer.
         match self.mouse_focused {
             Some(ele_idx) => {
                 let (request, remainder) = self.elements[ele_idx].handle_mouse_input(state, button);
@@ -203,9 +210,9 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                 // If element returns a request we can handle, return
                 // `R::default()`. Otherwise, return the original
                 // request.
-                match request.clone() {
-                    UiRequest::KeyboardFocus(on_off) => {
-                        if on_off {                             
+                match request {
+                    UiRequest::KeyboardFocus(on) => {
+                        if on {                             
                             self.keybd_focused = Some(ele_idx);
                             self.elements[ele_idx].set_keybd_focus(true);
                         } else {
@@ -234,57 +241,42 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                     None => None,
                 };
 
-                R::default()
+                // Send the unhandled input event back up to the consumer:
+                R::mouse_input(state, button)
             }
         }
     }
 
-    pub fn draw<S: Surface>(&mut self, target: &mut S) {
-        if self.vbo.is_none() || self.ibo.is_none() { 
-            panic!("Ui::draw(): Buffers not initialized.") 
-        }
+    pub fn update_mouse_focus<B>(&mut self, surface_dims: (u32, u32), mut background: Option<&mut B>) 
+            where B: SetFocus 
+    {
+        // let mut remainder = R::default();
 
-        let model_color = ui::C_ORANGE;
-
-        // Uniforms:
-        let uniforms = uniform! {
-            u_model_color: model_color,
-        };
-
-        // Update mouse focus:
-        self.update_mouse_focus(target.get_dimensions());        
-
-        // Draw elements:
-        target.draw((self.vbo.as_ref().unwrap(), EIAttribs { len: 1 }), self.ibo.as_ref().unwrap(), 
-            &self.program, &uniforms, &self.params).unwrap();
-
-        // Draw element text:
-        for element in self.elements.iter() {
-            element.draw_text(&self.text_system, target, &self.font_texture);
-
-            let text_display = TextDisplay::new(&self.text_system, &self.font_texture, 
-                element.get_text());
-
-            glium_text::draw(&text_display, &self.text_system, target, 
-                element.text_matrix(), element.text().get_color());
-        }
-    }
-
-    pub fn update_mouse_focus(&mut self, surface_dims: (u32, u32)) {
-        // Update elements:
+        // Update elements if the mouse has moved since last time:
         if !self.mouse_state.is_stale() {
             // Determine which element has mouse focus (by index):
             let newly_focused = self.focused_element_idx(surface_dims);
 
+            // If something new now has focus:
             if newly_focused != self.mouse_focused {
-                // No longer focused.
-                if let Some(idx) = self.mouse_focused {
-                    self.elements[idx].set_mouse_focus(false);
+                // Tell previously focused element the bad news:
+                // if let Some(idx) = self.mouse_focused {
+                //     self.elements[idx].set_mouse_focus(false);
+                // }
+                match self.mouse_focused {
+                    Some(idx) => self.elements[idx].set_mouse_focus(false),
+                    None => if let &mut Some(ref mut b) = 
+                        &mut background { b.set_mouse_focus(false) },
                 }
 
-                // Newly focused.
-                if let Some(idx) = newly_focused {
-                    self.elements[idx].set_mouse_focus(true);
+                // Notify the newly focused it is now in the spotlight:
+                // if let Some(idx) = newly_focused {
+                //     self.elements[idx].set_mouse_focus(true);
+                // }
+                match newly_focused {
+                    Some(idx) => self.elements[idx].set_mouse_focus(true),
+                    None => if let &mut Some(ref mut b) = 
+                        &mut background { b.set_mouse_focus(true) },
                 }
 
                 self.mouse_focused = newly_focused;
@@ -303,11 +295,32 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                 // println!("Element [{}] has focus.", idx);
                 return Some(idx);
             }
-
             idx += 1;
-        } 
-
+        }
         None
+    }
+
+    /// Recalculates positions of vertices and updates any other properties such as color.
+    // [FIXME]: Make something which doesn't need to rewrite every vertex. 
+    //             Perhaps add an optional element index parameter.
+    pub fn refresh_vertices(&mut self) {
+        match self.vbo {
+            Some(ref mut vbo) => {
+                let mut vertices: Vec<Vertex> = Vec::with_capacity(vbo.len());
+
+                for element in self.elements.iter_mut() {
+
+                    vertices.extend_from_slice(&element.vertices(
+                        self.display.get_framebuffer_dimensions(), self.scale,
+                    ));
+                }
+
+                vbo.write(&vertices);
+            },
+
+            None => panic!("Ui::resize(): Cannot refresh until Ui has been \
+                initialized with .init()"),
+        }
     }
 
     pub fn mouse_state(&self) -> &MouseState {

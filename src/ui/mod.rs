@@ -16,7 +16,7 @@ pub use self::element::{Element, ElementBorder, ElementKind, ElementText};
 pub use self::pane::Pane;
 pub use self::shape_2d::Shape2d;
 pub use self::vertex::Vertex;
-pub use self::traits::{CustomEventRemainder, EventRemainder};
+pub use self::traits::{CustomEventRemainder, EventRemainder, SetFocus};
 pub use self::types::{MouseInputHandler, KeyboardInputHandler, MouseEventHandler, KeyboardEventHandler};
 pub use self::enums::{TextAlign, UiRequest, EventRemainderOld, HandlerOption};
 pub use self::functions::{ key_into_string };
@@ -34,12 +34,18 @@ pub const SUBSUBDEPTH: f32 = 0.000244140625;
 mod traits {
     use std::fmt::{Debug, Formatter, Result as FmtResult};
     use std::default::Default;
-    use glium::glutin::MouseScrollDelta;
+    use glium::glutin::{MouseScrollDelta, ElementState, MouseButton};
+
+    pub trait SetFocus {
+        fn set_mouse_focus(&mut self, bool);
+    }
 
     pub trait EventRemainder: Clone + Debug + Default {
         fn closed() -> Self;
         fn mouse_moved((i32, i32)) -> Self;
         fn mouse_wheel(MouseScrollDelta) -> Self;
+        fn mouse_input(ElementState, MouseButton) -> Self;
+        fn set_mouse_focus(bool) -> Self;
     }
 
     pub trait CustomEventRemainder: CustomEventRemainderClone + CustomEventRemainderDebug {}

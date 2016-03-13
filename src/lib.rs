@@ -14,6 +14,6 @@ pub mod util;
 
 pub use self::ui::{Button, HexButton, TextBox, MouseState, KeyboardState, Element, ElementBorder, 
 	ElementKind, ElementText, Pane, Shape2d, Vertex, CustomEventRemainder, MouseInputHandler, 
-	KeyboardInputHandler, TextAlign, EventRemainder, HandlerOption, UiRequest};
+	KeyboardInputHandler, TextAlign, EventRemainder, HandlerOption, UiRequest, SetFocus};
 
 pub use glium::glutin::{ElementState, MouseButton, MouseScrollDelta};
