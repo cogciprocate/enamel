@@ -1,14 +1,16 @@
 //! This example demonstrates how Enamel would generally be used. 
 //!
-//! Two types are required to be declared. The first, `BackgroundCtl` in this
-//! example, to carry information from event handling closures for various
-//! interface elements. This type can be anything as long as it implements the
-//! `Default` and `EventRemainder` traits.
+//! Two traits must be implemented to use the enamel interfaces. The first,
+//! (implemented by the enum, `BackgroundCtl`, in this example) carries
+//! information from our custom defined event handling closures. This type can
+//! be anything as long as it implements the `Default` and `EventRemainder`
+//! traits.
 //!
-//! A second type, called `Background` here, acts as the background of the
-//! window and represents 'everything else' having to do with user
-//! interaction. If your program is a game, it would be the part of the game
-//! behind any buttons and interface elements. If your program 
+//! A second type (called `Background` here) acts as the background of the
+//! window and represents 'everything else' having to do with your program. It
+//! represents whatever layer or layers are 'behind' the user interface. This
+//! type need only implement `SetMouseFocus`, which is a second way to set focus.
+//!
 
 extern crate glium;
 extern crate enamel;
@@ -16,22 +18,22 @@ extern crate enamel;
 
 use glium::{DisplayBuild, Surface};
 use enamel::{Pane, Event, EventRemainder, UiRequest, TextBox, RectButton, HexButton, ElementState, 
-    MouseButton, MouseScrollDelta, VirtualKeyCode, SetFocus};
+    MouseButton, MouseScrollDelta, SetMouseFocus};
 
 /// This enum is used by our event handling closures to return useful
-/// information and commands back to the main window. It can contain as many
-/// custom variants as we need but must implement `Default` and
-/// `EventRemainder` which are used by enamel.
+/// information and commands back to the main window. 
+///
+/// This can contain as many custom variants as we need (and doesn't even need
+/// to be an enum) but must implement `Default` and `EventRemainder` which are
+/// used by enamel to send information about events not handled by custom
+/// closures.
+///
 ///
 // #[derive(Clone, Debug)]
 pub enum BackgroundCtl {
     None,
     Closed,
     Input(Event),
-    KeyboardInput(ElementState, u8, Option<VirtualKeyCode>),
-    MouseMoved((i32, i32)),
-    MouseWheel(MouseScrollDelta),
-    MouseInput(ElementState, MouseButton),
     SetMouseFocus(bool),
     TextEntered(String),
 }
@@ -51,33 +53,18 @@ impl EventRemainder for BackgroundCtl {
         BackgroundCtl::Input(event)
     }
 
-    // fn keyboard_input(st: ElementState, key: u8, v_code: Option<VirtualKeyCode>) -> Self {
-    //     BackgroundCtl::KeyboardInput(st, key, v_code)
+    // fn set_mouse_focus(focus: bool) -> Self {
+    //     BackgroundCtl::SetMouseFocus(focus)
     // }
-
-    // fn mouse_moved(pos: (i32, i32)) -> Self {
-    //     BackgroundCtl::MouseMoved(pos)
-    // }
-
-    // fn mouse_wheel(delta: MouseScrollDelta) -> Self {
-    //     BackgroundCtl::MouseWheel(delta)
-    // }
-
-    // fn mouse_input(st: ElementState, btn: MouseButton) -> Self {
-    //     BackgroundCtl::MouseInput(st, btn)
-    // }
-        
-    fn set_mouse_focus(focus: bool) -> Self {
-        BackgroundCtl::SetMouseFocus(focus)
-    }
 }
 
 
-/// This represents a 'background' which we would use to know when know when
-/// the mouse was not hovering over any interface elements. 
+/// This represents a 'background' which is sent any events that the interface
+/// layer did not make use of. These 'leftover' events are represented by the
+/// `EventRemainder` trait, which in this case we have implemented on an enum.
 ///
-/// If any mouse or keyboard events happen when no interface elements have
-/// focus, they would be sent here.
+/// If any mouse or keyboard events happen when no interface elements make use
+/// of them, they would be sent here.
 ///
 pub struct Background {
 	pub mouse_pos: (i32, i32),
@@ -105,9 +92,9 @@ impl<'a> Background {
                 _ => (),
             } }
             // BackgroundCtl::KeyboardInput()
-	        BackgroundCtl::MouseWheel(delta) => self.handle_mouse_wheel(delta),
-	        BackgroundCtl::MouseInput(st, btn) => self.handle_mouse_input(st, btn),
-	        BackgroundCtl::MouseMoved(pos) => self.handle_mouse_moved(pos),
+	        // BackgroundCtl::MouseWheel(delta) => self.handle_mouse_wheel(delta),
+	        // BackgroundCtl::MouseInput(st, btn) => self.handle_mouse_input(st, btn),
+	        // BackgroundCtl::MouseMoved(pos) => self.handle_mouse_moved(pos),
 	        BackgroundCtl::TextEntered(s) => printlnc!(royal_blue: "String entered: '{}'.", &s),
 	        BackgroundCtl::Closed => { 
                 self.closed = true;
@@ -149,7 +136,7 @@ impl<'a> Background {
 	}
 }
 
-impl<'a> SetFocus for Background {
+impl<'a> SetMouseFocus for Background {
 	fn set_mouse_focus(&mut self, focus: bool) {
 		if focus {
 			printlnc!(dark_grey: "Background now has mouse focus.");
@@ -187,7 +174,7 @@ fn main() {
             }))
         )
         .element(TextBox::new([1.0, -1.0, 0.0], (-0.385, 0.27), 4.45, 
-                "Text:", enamel::ui::C_ORANGE, "1", Box::new(|key_st, vk_code, kb_st, text_string| {
+                "Text:", enamel::ui::C_ORANGE, "", Box::new(|key_st, vk_code, kb_st, text_string| {
                     enamel::ui::key_into_string(key_st, vk_code, kb_st, text_string);
 
                     (UiRequest::None, BackgroundCtl::TextEntered(text_string.clone()))
@@ -222,7 +209,7 @@ fn main() {
         )
         .init();
 
-    // This can be whatever we want as long as it implements `SetFocus`:
+    // This can be whatever we want as long as it implements `SetMouseFocus`:
     let mut background = Background::new();
 
     printlnc!(white: "Enamel 'basics' example running. Press 'ctrl + q' or \

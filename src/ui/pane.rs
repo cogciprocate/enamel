@@ -4,7 +4,7 @@ use glium::backend::glutin_backend::GlutinFacade;
 use glium::{self, VertexBuffer, IndexBuffer, Program, DrawParameters, Surface};
 use glium::vertex::{EmptyInstanceAttributes as EIAttribs};
 use glium::glutin::{ElementState, MouseButton, Event, VirtualKeyCode};
-use ui::{self, Vertex, Element, MouseState, KeyboardState, UiRequest, EventRemainder, SetFocus};
+use ui::{self, Vertex, Element, MouseState, KeyboardState, UiRequest, EventRemainder, SetMouseFocus};
 
 const TWOSR3: f32 = 1.15470053838;
 const DEFAULT_UI_SCALE: f32 = 0.9;
@@ -107,7 +107,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
     }
 
     pub fn draw<S, B>(&mut self, target: &mut S, background: &mut B) 
-            where S: Surface, B: SetFocus 
+            where S: Surface, B: SetMouseFocus 
     {
         if self.vbo.is_none() || self.ibo.is_none() { 
             panic!("Ui::draw(): Buffers not initialized.") 
@@ -141,7 +141,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
         }
     }
 
-    pub fn handle_event<B: SetFocus>(&mut self, event: Event, background: &mut B) -> R {
+    pub fn handle_event<B: SetMouseFocus>(&mut self, event: Event, background: &mut B) -> R {
         match event.clone() {
             Event::Closed => {                    
                 R::closed()
@@ -180,17 +180,13 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
         if self.keybd_state.control {
             // 'Control' is down:
             match key_state {
-                ElementState::Pressed => {
-                    match vk_code {
-                        Some(vkc) => {
-                            match vkc {
-                                VirtualKeyCode::Q => R::closed(),
-                                _ => R::input(event),
-                            }
-                        },
-                        None => R::input(event),
-                    }
-                },
+                ElementState::Pressed => { match vk_code {
+                    Some(vkc) => { match vkc {
+                        VirtualKeyCode::Q => R::closed(),
+                        _ => R::input(event),
+                    } },
+                    None => R::input(event),
+                } },
                 _ => R::input(event),
             }
         } else {
@@ -252,7 +248,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
     }
 
     pub fn update_mouse_focus<B>(&mut self, background: &mut B) 
-            where B: SetFocus 
+            where B: SetMouseFocus 
     {
         // Update elements if the mouse has moved since last time
         if !self.mouse_state.is_stale() {

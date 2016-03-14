@@ -16,7 +16,7 @@ pub use self::element::{Element, ElementBorder, ElementKind, ElementText};
 pub use self::pane::Pane;
 pub use self::shape_2d::Shape2d;
 pub use self::vertex::Vertex;
-pub use self::traits::{CustomEventRemainder, EventRemainder, SetFocus};
+pub use self::traits::{CustomEventRemainder, EventRemainder, SetMouseFocus};
 pub use self::types::{MouseInputHandler, KeyboardInputHandler, MouseEventHandler, KeyboardEventHandler};
 pub use self::enums::{TextAlign, UiRequest, EventRemainderOld, HandlerOption};
 pub use self::functions::{ key_into_string, map_vkc };
@@ -37,7 +37,7 @@ mod traits {
     // use glium::glutin::{MouseScrollDelta, ElementState, MouseButton, VirtualKeyCode, Event};
     use glium::glutin::Event;
 
-    pub trait SetFocus {
+    pub trait SetMouseFocus {
         fn set_mouse_focus(&mut self, bool);
     }
 
@@ -48,7 +48,7 @@ mod traits {
         // fn mouse_moved((i32, i32)) -> Self;
         // fn mouse_wheel(MouseScrollDelta) -> Self;
         // fn mouse_input(ElementState, MouseButton) -> Self;
-        fn set_mouse_focus(bool) -> Self;
+        // fn set_mouse_focus(bool) -> Self;
     }
 
     pub trait CustomEventRemainder: CustomEventRemainderClone + CustomEventRemainderDebug {}
