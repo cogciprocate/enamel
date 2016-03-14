@@ -19,7 +19,7 @@ pub use self::vertex::Vertex;
 pub use self::traits::{CustomEventRemainder, EventRemainder, SetFocus};
 pub use self::types::{MouseInputHandler, KeyboardInputHandler, MouseEventHandler, KeyboardEventHandler};
 pub use self::enums::{TextAlign, UiRequest, EventRemainderOld, HandlerOption};
-pub use self::functions::{ key_into_string };
+pub use self::functions::{ key_into_string, map_vkc };
 
 
 pub const C_PINK: [f32; 4] = [0.990, 0.490, 0.700, 1.0];
@@ -34,7 +34,8 @@ pub const SUBSUBDEPTH: f32 = 0.000244140625;
 mod traits {
     use std::fmt::{Debug, Formatter, Result as FmtResult};
     use std::default::Default;
-    use glium::glutin::{MouseScrollDelta, ElementState, MouseButton};
+    // use glium::glutin::{MouseScrollDelta, ElementState, MouseButton, VirtualKeyCode, Event};
+    use glium::glutin::Event;
 
     pub trait SetFocus {
         fn set_mouse_focus(&mut self, bool);
@@ -42,9 +43,11 @@ mod traits {
 
     pub trait EventRemainder: Default {
         fn closed() -> Self;
-        fn mouse_moved((i32, i32)) -> Self;
-        fn mouse_wheel(MouseScrollDelta) -> Self;
-        fn mouse_input(ElementState, MouseButton) -> Self;
+        fn input(Event) -> Self;
+        // fn keyboard_input(ElementState, u8, Option<VirtualKeyCode>) -> Self;
+        // fn mouse_moved((i32, i32)) -> Self;
+        // fn mouse_wheel(MouseScrollDelta) -> Self;
+        // fn mouse_input(ElementState, MouseButton) -> Self;
         fn set_mouse_focus(bool) -> Self;
     }
 
@@ -108,7 +111,7 @@ mod enums {
     #[derive(Clone)]
     pub enum UiRequest {
         None,
-        Redraw,
+        Refresh,
         KeyboardFocus(bool),
     }
 
@@ -127,6 +130,7 @@ mod enums {
         Sub(usize),    
     }
 
+    #[derive(Clone)]
     pub enum TextAlign {
         Center,
         Left,
@@ -195,7 +199,6 @@ mod functions {
                 Key8 | Numpad7 => Some('8'),
                 Key9 | Numpad8 => Some('9'),
                 Key0 | Numpad9 => Some('0'),    
-
                 A => Some('a'),
                 B => Some('b'),
                 C => Some('c'),
@@ -222,11 +225,8 @@ mod functions {
                 X => Some('x'),
                 Y => Some('y'),
                 Z => Some('z'),
-
                 Space => Some(' '),
-
                 _ => None
-
             }
         } else {
             None

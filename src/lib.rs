@@ -16,4 +16,7 @@ pub use self::ui::{Button, HexButton, TextBox, MouseState, KeyboardState, Elemen
 	ElementKind, ElementText, Pane, Shape2d, Vertex, CustomEventRemainder, MouseInputHandler, 
 	KeyboardInputHandler, TextAlign, EventRemainder, HandlerOption, UiRequest, SetFocus, RectButton};
 
-pub use glium::glutin::{ElementState, MouseButton, MouseScrollDelta};
+pub use glium::glutin::{Event, ElementState, MouseButton, MouseScrollDelta, VirtualKeyCode};
+
+// Event Variants:
+// http://tomaka.github.io/glium/glium/glutin/enum.Event.html

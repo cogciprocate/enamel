@@ -2,7 +2,7 @@
 
 use glium::Surface;
 use glium_text::{self, TextSystem, FontTexture, TextDisplay};
-use glium::glutin::{ElementState, MouseButton, VirtualKeyCode};
+use glium::glutin::{Event, ElementState, MouseButton, VirtualKeyCode};
 use ui::{Vertex, Shape2d, HandlerOption, UiRequest, KeyboardState, MouseEventHandler, 
     KeyboardEventHandler, EventRemainder};
 use util;
@@ -375,7 +375,7 @@ impl<'a, R> Element<R> where R: EventRemainder {
         }
 
         if !has_focus {
-            self.depress(false);
+            self.is_depressed = false;
         }
 
         self.has_mouse_focus = has_focus;
@@ -404,62 +404,56 @@ impl<'a, R> Element<R> where R: EventRemainder {
 
     // [FIXME]: Unused Vars.
     #[allow(unused_variables)]
-    pub fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton) -> (UiRequest, R) {
-        let mut request = UiRequest::None;
-        let mut remainder = R::default();
-
+    pub fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton, event: Event) 
+            -> (UiRequest, R) 
+    {
         if let MouseButton::Left = button {
             match state {
                 ElementState::Pressed => {
-                    self.depress(true);
-                    request = UiRequest::Redraw;
+                    self.is_depressed = true;
+                    (UiRequest::Refresh, R::default())
                 },
                 ElementState::Released => {
-                    let was_clicked = self.is_depressed;
-                    self.depress(false);
-
-                    if was_clicked {
+                    if self.is_depressed {
+                        self.is_depressed = false;
+                    
                         if let HandlerOption::Fn(ref mut handler) = self.mouse_event_handler {
-                            let handler_ret = handler(state, button);
-                            request = handler_ret.0;
-                            remainder = handler_ret.1;
+                            handler(state, button)
                         } else {
-                            request = UiRequest::Redraw;
+                            (UiRequest::Refresh, R::default())
                         }
                     } else {
-                        request = UiRequest::Redraw;
+                        (UiRequest::None, R::input(event))
                     }
                 },
             }
+        } else {
+            (UiRequest::None, R::input(event))
         }
-
-        (request, remainder)
     }
 
     // [FIXME]: Unused Vars.
     // [FIXME]: Error message (set up result type).
     #[allow(unused_variables)]
     pub fn handle_keyboard_input(&mut self, key_state: ElementState, vk_code: Option<VirtualKeyCode>, 
-                kb_state: &KeyboardState) -> (UiRequest, R)
+                kb_state: &KeyboardState, event: Event) -> (UiRequest, R)
     {
-        let (request, remainder) = match self.keyboard_event_handler {
+        match self.keyboard_event_handler {
             HandlerOption::Fn(ref mut handler) => {
                 handler(key_state, vk_code, kb_state, &mut self.text.string)
             },
             HandlerOption::Sub(ele_idx) => {
                 assert!(ele_idx < self.sub_elements.len(), "{}Element::handle_keyboard_input(): {}:{}",
                     module_path!(), column!(), line!());
-                self.sub_elements[ele_idx].handle_keyboard_input(key_state, vk_code, kb_state)
+                self.sub_elements[ele_idx].handle_keyboard_input(key_state, vk_code, kb_state, event)
             },
-            _ => (UiRequest::None, R::default()),
-        };
-
-        (request, remainder)
+            _ => (UiRequest::None, R::input(event)),
+        }
     }
 
-    fn depress(&mut self, depress: bool) {
-        self.is_depressed = depress;
-    }
+    // fn depress(&mut self, depress: bool) {
+    //     self.is_depressed = depress;
+    // }
 
     ///////// [FIXME]: CACHE THIS STUFF PROPERLY ////////// 
     fn left_edge(&self) -> f32 {

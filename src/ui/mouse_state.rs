@@ -49,7 +49,7 @@ impl MouseState {
         // println!("                             {:?}", self.position[self.frame as usize]);
     }
 
-    pub fn update_button(&mut self, button: MouseButton, state: ElementState) {
+    pub fn set_button(&mut self, button: MouseButton, state: ElementState) {
         match button {
             MouseButton::Left => self.left = state,            
             MouseButton::Right => self.right = state,
@@ -64,6 +64,15 @@ impl MouseState {
 
     pub fn is_stale(&self) -> bool {
         self.is_stale
+    }
+
+    pub fn button(&self, button: MouseButton) -> ElementState {
+        match button {
+            MouseButton::Left => self.left.clone(),            
+            MouseButton::Right => self.right.clone(),
+            MouseButton::Middle => self.middle.clone(),
+            MouseButton::Other(b) => self.other[&b],
+        }
     }
 }
 

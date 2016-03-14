@@ -23,6 +23,7 @@ pub struct Pane<'d, R> where R: EventRemainder {
     keybd_state: KeyboardState,
     mouse_focused: Option<usize>,
     keybd_focused: Option<usize>,
+    surface_dims: (u32, u32),
 }
 
 impl<'d, R> Pane<'d, R> where R: EventRemainder {
@@ -69,6 +70,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
             keybd_state: KeyboardState::new(),
             mouse_focused: None,
             keybd_focused: None,
+            surface_dims: display.get_framebuffer_dimensions(),
         }
     }
 
@@ -118,8 +120,10 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
             u_model_color: model_color,
         };
 
+        self.surface_dims = target.get_dimensions();
+
         // Update mouse focus:
-        self.update_mouse_focus(target.get_dimensions(), background);
+        self.update_mouse_focus(background);
 
         // Draw elements:
         target.draw((self.vbo.as_ref().unwrap(), EIAttribs { len: 1 }), self.ibo.as_ref().unwrap(), 
@@ -137,8 +141,8 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
         }
     }
 
-    pub fn handle_event(&mut self, event: Event) -> R {
-        match event {
+    pub fn handle_event<B: SetFocus>(&mut self, event: Event, background: &mut B) -> R {
+        match event.clone() {
             Event::Closed => {                    
                 R::closed()
             },
@@ -147,25 +151,27 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                 R::default()
             },
             Event::KeyboardInput(key_state, _, vk_code) => {
-                self.handle_keyboard_input(key_state, vk_code)
+                self.handle_keyboard_input(key_state, vk_code, event)
             },
             Event::MouseInput(state, button) => {
-                self.mouse_state.update_button(button, state);
-                self.handle_mouse_input(state, button)
+                self.update_mouse_focus(background);
+                self.mouse_state.set_button(button, state);
+                self.handle_mouse_input(state, button, event)
             },
             Event::MouseMoved(p) => {
                 self.mouse_state.update_position(p);
-                R::mouse_moved(p)
+                // self.update_mouse_focus(background);
+                R::input(event)
             },
             Event::MouseWheel(delta) => {
-                R::mouse_wheel(delta)
+                R::input(event)
             },
             _ => R::default()
         }
     }
     
-    fn handle_keyboard_input(&mut self, key_state: ElementState, vk_code: Option<VirtualKeyCode>) 
-            -> R
+    fn handle_keyboard_input(&mut self, key_state: ElementState, vk_code: Option<VirtualKeyCode>, 
+                event: Event) -> R
     {
         // Update keyboard state (modifiers, etc.):
         self.keybd_state.update(key_state, vk_code);
@@ -179,37 +185,35 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                         Some(vkc) => {
                             match vkc {
                                 VirtualKeyCode::Q => R::closed(),
-                                _ => R::default(),
+                                _ => R::input(event),
                             }
                         },
-                        None => R::default(),
+                        None => R::input(event),
                     }
                 },
-                _ => R::default(),
+                _ => R::input(event),
             }
         } else {
             // No modifiers:
             // Pass input to the element that has keyboard focus, if any:
             if let Some(ele_idx) = self.keybd_focused {
                 let (request, remainder) = self.elements[ele_idx].handle_keyboard_input(
-                    key_state, vk_code, &self.keybd_state);
+                    key_state, vk_code, &self.keybd_state, event);
                 remainder
             } else {
-                R::default()
+                R::input(event)
             }
         }
     }
 
-    fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton) -> R {
+    fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton, event: Event) -> R {
         // Determine if any elements currently have mouse focus and will be
         // handling the input event, if not, send up to the consumer.
         match self.mouse_focused {
             Some(ele_idx) => {
-                let (request, remainder) = self.elements[ele_idx].handle_mouse_input(state, button);
+                let (request, remainder) = self.elements[ele_idx]
+                    .handle_mouse_input(state, button, event);
 
-                // If element returns a request we can handle, return
-                // `R::default()`. Otherwise, return the original
-                // request.
                 match request {
                     UiRequest::KeyboardFocus(on) => {
                         if on {                             
@@ -221,14 +225,14 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                         }
 
                         self.refresh_vertices();
-                        remainder
                     },
-                    UiRequest::Redraw => {
+                    UiRequest::Refresh => {
                         self.refresh_vertices();
-                        remainder
                     },
-                    _ => remainder,
+                    _ => (),
                 }
+
+                remainder
             },
             None => {
                 // Clear keyboard focus:
@@ -242,54 +246,50 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                 };
 
                 // Send the unhandled input event back up to the consumer:
-                R::mouse_input(state, button)
+                R::input(event)
             }
         }
     }
 
-    pub fn update_mouse_focus<B>(&mut self, surface_dims: (u32, u32), background: &mut B) 
+    pub fn update_mouse_focus<B>(&mut self, background: &mut B) 
             where B: SetFocus 
     {
-        // let mut remainder = R::default();
-
-        // Update elements if the mouse has moved since last time:
+        // Update elements if the mouse has moved since last time
         if !self.mouse_state.is_stale() {
             // Determine which element has mouse focus (by index):
-            let newly_focused = self.focused_element_idx(surface_dims);
+            let newly_focused = self.focused_element_idx();
 
             // If something new now has focus:
             if newly_focused != self.mouse_focused {
                 // Tell previously focused element the bad news:
-                // if let Some(idx) = self.mouse_focused {
-                //     self.elements[idx].set_mouse_focus(false);
-                // }
                 match self.mouse_focused {
                     Some(idx) => self.elements[idx].set_mouse_focus(false),
                     None => background.set_mouse_focus(false),
                 }
 
-                // Notify the newly focused it is now in the spotlight:
-                // if let Some(idx) = newly_focused {
-                //     self.elements[idx].set_mouse_focus(true);
+                // // If the left mouse button isn't being held down:
+                // if self.mouse_state.button(MouseButton::Left) != ElementState::Pressed {
+                    // Notify the newly focused that it is now in the spotlight:
+                    match newly_focused {
+                        Some(idx) => self.elements[idx].set_mouse_focus(true),
+                        None => background.set_mouse_focus(true),
+                    }
                 // }
-                match newly_focused {
-                    Some(idx) => self.elements[idx].set_mouse_focus(true),
-                    None => background.set_mouse_focus(true),
-                }
 
+                // Update for comparison next time:
                 self.mouse_focused = newly_focused;
 
-                // [FIXME]: Make something which doesn't need to rewrite every vertex.
+                // [FIXME]: Make something that doesn't need to rewrite every vertex.
                 self.refresh_vertices();
             }
         }
     }
 
-    fn focused_element_idx(&mut self, surface_dims: (u32, u32)) -> Option<usize> {
+    fn focused_element_idx(&mut self) -> Option<usize> {
         let mut idx = 0;
 
         for element in self.elements.iter_mut() {
-            if element.has_mouse_focus(self.mouse_state.surface_position(surface_dims)) {
+            if element.has_mouse_focus(self.mouse_state.surface_position(self.surface_dims)) {
                 // println!("Element [{}] has focus.", idx);
                 return Some(idx);
             }
