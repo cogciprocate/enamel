@@ -74,7 +74,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
 
     pub fn element(mut self, element: Element<R>) -> Pane<'d, R> {
         if self.vbo.is_some() || self.ibo.is_some() { 
-            panic!("Ui::element(): [FIXME]: Cannot (yet) add element after initialization.") 
+            panic!("Ui::element(): [FIXME]: Cannot [yet] add element after initialization.") 
         }
 
         self.elements.push(element);
@@ -104,7 +104,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
         self
     }
 
-    pub fn draw<S, B>(&mut self, target: &mut S, background: Option<&mut B>) 
+    pub fn draw<S, B>(&mut self, target: &mut S, background: &mut B) 
             where S: Surface, B: SetFocus 
     {
         if self.vbo.is_none() || self.ibo.is_none() { 
@@ -221,11 +221,11 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                         }
 
                         self.refresh_vertices();
-                        R::default()
+                        remainder
                     },
                     UiRequest::Redraw => {
                         self.refresh_vertices();
-                        R::default()
+                        remainder
                     },
                     _ => remainder,
                 }
@@ -247,7 +247,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
         }
     }
 
-    pub fn update_mouse_focus<B>(&mut self, surface_dims: (u32, u32), mut background: Option<&mut B>) 
+    pub fn update_mouse_focus<B>(&mut self, surface_dims: (u32, u32), background: &mut B) 
             where B: SetFocus 
     {
         // let mut remainder = R::default();
@@ -265,8 +265,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                 // }
                 match self.mouse_focused {
                     Some(idx) => self.elements[idx].set_mouse_focus(false),
-                    None => if let &mut Some(ref mut b) = 
-                        &mut background { b.set_mouse_focus(false) },
+                    None => background.set_mouse_focus(false),
                 }
 
                 // Notify the newly focused it is now in the spotlight:
@@ -275,8 +274,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                 // }
                 match newly_focused {
                     Some(idx) => self.elements[idx].set_mouse_focus(true),
-                    None => if let &mut Some(ref mut b) = 
-                        &mut background { b.set_mouse_focus(true) },
+                    None => background.set_mouse_focus(true),
                 }
 
                 self.mouse_focused = newly_focused;

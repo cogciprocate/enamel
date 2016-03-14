@@ -9,7 +9,7 @@ mod keyboard_state;
 mod mouse_state;
 mod controls;
 
-pub use self::controls::{Button, HexButton, TextBox};
+pub use self::controls::{Button, HexButton, RectButton, TextBox};
 pub use self::mouse_state::MouseState;
 pub use self::keyboard_state::KeyboardState;
 pub use self::element::{Element, ElementBorder, ElementKind, ElementText};
@@ -40,7 +40,7 @@ mod traits {
         fn set_mouse_focus(&mut self, bool);
     }
 
-    pub trait EventRemainder: Clone + Debug + Default {
+    pub trait EventRemainder: Default {
         fn closed() -> Self;
         fn mouse_moved((i32, i32)) -> Self;
         fn mouse_wheel(MouseScrollDelta) -> Self;

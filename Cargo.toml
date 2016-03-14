@@ -1,6 +1,6 @@
 [package]
 name = "enamel"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Nick Sanders <cogciprocate@gmail.com>"]
 description = "A simple OpenGL interface overlay for use with Glium."
 documentation = "https://github.com/cogciprocate/enamel"
@@ -14,3 +14,6 @@ exclude = ["target/*", "*.png", "bak/*"]
 [dependencies]
 glium = "0.13"
 glium_text = "0.8"
+
+[dev-dependencies]
+colorify = "0.1"
