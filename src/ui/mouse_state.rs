@@ -25,7 +25,6 @@ impl MouseState {
             right: ElementState::Released,
             middle: ElementState::Released,
             other: HashMap::new(),
-            // is_depressed: false,
             is_stale: false,
         }
     }
@@ -73,6 +72,11 @@ impl MouseState {
             MouseButton::Middle => self.middle.clone(),
             MouseButton::Other(b) => self.other[&b],
         }
+    }
+
+    pub fn any_pressed(&self) -> bool {
+        use ElementState::Pressed;
+        self.left == Pressed || self.middle == Pressed || self.right == Pressed
     }
 }
 

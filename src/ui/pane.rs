@@ -106,8 +106,8 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
         self
     }
 
-    pub fn draw<S, B>(&mut self, target: &mut S, background: &mut B) 
-            where S: Surface, B: SetMouseFocus 
+    pub fn draw<S>(&mut self, target: &mut S, /*background: &mut B*/) 
+            where S: Surface, /*B: SetMouseFocus */
     {
         if self.vbo.is_none() || self.ibo.is_none() { 
             panic!("Ui::draw(): Buffers not initialized.") 
@@ -123,7 +123,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
         self.surface_dims = target.get_dimensions();
 
         // Update mouse focus:
-        self.update_mouse_focus(background);
+        self.update_mouse_focus(/*background*/);
 
         // Draw elements:
         target.draw((self.vbo.as_ref().unwrap(), EIAttribs { len: 1 }), self.ibo.as_ref().unwrap(), 
@@ -141,7 +141,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
         }
     }
 
-    pub fn handle_event<B: SetMouseFocus>(&mut self, event: Event, background: &mut B) -> R {
+    pub fn handle_event/*<B: SetMouseFocus>*/(&mut self, event: Event, /*background: &mut B*/) -> R {
         match event.clone() {
             Event::Closed => {                    
                 R::closed()
@@ -154,17 +154,17 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                 self.handle_keyboard_input(key_state, vk_code, event)
             },
             Event::MouseInput(state, button) => {
-                self.update_mouse_focus(background);
                 self.mouse_state.set_button(button, state);
+                self.update_mouse_focus();
                 self.handle_mouse_input(state, button, event)
             },
             Event::MouseMoved(p) => {
                 self.mouse_state.update_position(p);
                 // self.update_mouse_focus(background);
-                R::input(event)
+                R::event(event)
             },
             Event::MouseWheel(delta) => {
-                R::input(event)
+                R::event(event)
             },
             _ => R::default()
         }
@@ -183,11 +183,11 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                 ElementState::Pressed => { match vk_code {
                     Some(vkc) => { match vkc {
                         VirtualKeyCode::Q => R::closed(),
-                        _ => R::input(event),
+                        _ => R::event(event),
                     } },
-                    None => R::input(event),
+                    None => R::event(event),
                 } },
-                _ => R::input(event),
+                _ => R::event(event),
             }
         } else {
             // No modifiers:
@@ -197,7 +197,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                     key_state, vk_code, &self.keybd_state, event);
                 remainder
             } else {
-                R::input(event)
+                R::event(event)
             }
         }
     }
@@ -219,15 +219,11 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                             self.keybd_focused = None;
                             self.elements[ele_idx].set_keybd_focus(false);
                         }
-
-                        self.refresh_vertices();
                     },
-                    UiRequest::Refresh => {
-                        self.refresh_vertices();
-                    },
+                    UiRequest::Refresh => (),
                     _ => (),
                 }
-
+                self.refresh_vertices();
                 remainder
             },
             None => {
@@ -242,14 +238,14 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                 };
 
                 // Send the unhandled input event back up to the consumer:
-                R::input(event)
+                R::event(event)
             }
         }
     }
 
-    pub fn update_mouse_focus<B>(&mut self, background: &mut B) 
-            where B: SetMouseFocus 
-    {
+    pub fn update_mouse_focus/*<B: SetMouseFocus>*/(&mut self, /*background: &mut B*/) {
+        if self.mouse_state.any_pressed() { return; }
+
         // Update elements if the mouse has moved since last time
         if !self.mouse_state.is_stale() {
             // Determine which element has mouse focus (by index):
@@ -260,17 +256,14 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                 // Tell previously focused element the bad news:
                 match self.mouse_focused {
                     Some(idx) => self.elements[idx].set_mouse_focus(false),
-                    None => background.set_mouse_focus(false),
+                    None => /*background.set_mouse_focus(false)*/ (),
                 }
 
-                // // If the left mouse button isn't being held down:
-                // if self.mouse_state.button(MouseButton::Left) != ElementState::Pressed {
-                    // Notify the newly focused that it is now in the spotlight:
-                    match newly_focused {
-                        Some(idx) => self.elements[idx].set_mouse_focus(true),
-                        None => background.set_mouse_focus(true),
-                    }
-                // }
+                // Notify the newly focused that it is now in the spotlight:
+                match newly_focused {
+                    Some(idx) => self.elements[idx].set_mouse_focus(true),
+                    None => /*background.set_mouse_focus(true)*/ (),
+                }
 
                 // Update for comparison next time:
                 self.mouse_focused = newly_focused;

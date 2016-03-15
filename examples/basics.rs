@@ -33,7 +33,7 @@ use enamel::{Pane, Event, EventRemainder, UiRequest, TextBox, RectButton, HexBut
 pub enum BackgroundCtl {
     None,
     Closed,
-    Input(Event),
+    Event(Event),
     SetMouseFocus(bool),
     TextEntered(String),
 }
@@ -49,8 +49,8 @@ impl EventRemainder for BackgroundCtl {
         BackgroundCtl::Closed
     }
 
-    fn input(event: Event) -> Self {
-        BackgroundCtl::Input(event)
+    fn event(event: Event) -> Self {
+        BackgroundCtl::Event(event)
     }
 
     // fn set_mouse_focus(focus: bool) -> Self {
@@ -82,9 +82,9 @@ impl<'a> Background {
 	fn handle_event_remainder(&mut self, rdr: BackgroundCtl) {
 	    match rdr {
 	        BackgroundCtl::None => (),
-            BackgroundCtl::Input(e) => { match e {
+            BackgroundCtl::Event(e) => { match e {
                 Event::KeyboardInput(st, key, vkc) => 
-                    println!("Key: {} ({:?}) has been {:?}.", key, enamel::ui::map_vkc(vkc), st),
+                    println!("Key: 0x{:02X} ({:?}) has been {:?}.", key, enamel::ui::map_vkc(vkc), st),
                 Event::MouseMoved(pos) => self.handle_mouse_moved(pos),
                 Event::MouseWheel(delta) => self.handle_mouse_wheel(delta),
                 Event::MouseInput(st, btn) => self.handle_mouse_input(st, btn),
@@ -160,14 +160,14 @@ fn main() {
     // Primary user interface elements:
     let mut ui = Pane::new(&display)
         .element(HexButton::new([1.0, -1.0, 0.0], (-0.57, 0.37), 1.8, 
-                "View Output", enamel::ui::C_ORANGE)
+                "Previous", enamel::ui::C_ORANGE)
             .mouse_event_handler(Box::new(|_, _| {
             	println!("This button doesn't do much.");
                 (UiRequest::None, BackgroundCtl::None)
             }))
         )
         .element(HexButton::new([1.0, -1.0, 0.0], (-0.20, 0.37), 1.8, 
-                "View All", enamel::ui::C_ORANGE)
+                "Next", enamel::ui::C_ORANGE)
             .mouse_event_handler(Box::new(|_, _| {
             	println!("This button does even less than the one next to it.");
                 (UiRequest::None, BackgroundCtl::None)
@@ -222,12 +222,12 @@ fn main() {
 
         // Check input events:
         for ev in display.poll_events() {
-            let rmndr = ui.handle_event(ev, &mut background);
+            let rmndr = ui.handle_event(ev, /*&mut background*/);
             background.handle_event_remainder(rmndr);
         }
 
         // Draw UI:
-        ui.draw(&mut target, &mut background);
+        ui.draw(&mut target, /*&mut background*/);
 
         // Swap buffers:
         target.finish().unwrap();

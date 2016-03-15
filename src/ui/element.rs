@@ -366,9 +366,6 @@ impl<'a, R> Element<R> where R: EventRemainder {
     }
 
     /// Sets whether or not the mouse cursor is hovering over this element.
-    // [FIXME]: PENDING FUTURE INVESTIGATION:
-    // ADDING OR REMOVING A BORDER TO THE LIST OF VERTICES CAUSES A CRASH.
-    // INVESTIGATE.    
     pub fn set_mouse_focus(&mut self, has_focus: bool) {
         if let Some(ref mut border) = self.border {
             border.is_visible = has_focus;
@@ -423,12 +420,12 @@ impl<'a, R> Element<R> where R: EventRemainder {
                             (UiRequest::Refresh, R::default())
                         }
                     } else {
-                        (UiRequest::None, R::input(event))
+                        (UiRequest::Refresh, R::event(event))
                     }
                 },
             }
         } else {
-            (UiRequest::None, R::input(event))
+            (UiRequest::None, R::event(event))
         }
     }
 
@@ -447,7 +444,7 @@ impl<'a, R> Element<R> where R: EventRemainder {
                     module_path!(), column!(), line!());
                 self.sub_elements[ele_idx].handle_keyboard_input(key_state, vk_code, kb_state, event)
             },
-            _ => (UiRequest::None, R::input(event)),
+            _ => (UiRequest::None, R::event(event)),
         }
     }
 

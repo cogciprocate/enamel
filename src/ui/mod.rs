@@ -42,8 +42,9 @@ mod traits {
     }
 
     pub trait EventRemainder: Default {
+        // TODO: DEPRICATE: As soon as custom keyboard input handlers are done:
         fn closed() -> Self;
-        fn input(Event) -> Self;
+        fn event(Event) -> Self;
         // fn keyboard_input(ElementState, u8, Option<VirtualKeyCode>) -> Self;
         // fn mouse_moved((i32, i32)) -> Self;
         // fn mouse_wheel(MouseScrollDelta) -> Self;
@@ -108,7 +109,7 @@ mod enums {
     use ui::CustomEventRemainder;
     use glium::glutin::MouseScrollDelta;
 
-    #[derive(Clone)]
+    #[derive(Clone, PartialEq, Eq)]
     pub enum UiRequest {
         None,
         Refresh,
@@ -130,7 +131,7 @@ mod enums {
         Sub(usize),    
     }
 
-    #[derive(Clone)]
+    #[derive(Clone, PartialEq, Eq)]
     pub enum TextAlign {
         Center,
         Left,
