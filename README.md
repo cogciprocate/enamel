@@ -1,6 +1,8 @@
 enamel
 ======
 
+[![](http://meritbadge.herokuapp.com/enamel)](https://crates.io/crates/enamel)
+
 *A pretty coating to protect the Rust inside.*
 
 An OpenGL&trade; interface overlay library for use with [Glium].
