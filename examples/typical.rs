@@ -18,7 +18,7 @@ extern crate enamel;
 
 use glium::{DisplayBuild, Surface};
 use enamel::{Pane, Event, EventRemainder, UiRequest, TextBox, RectButton, HexButton, ElementState, 
-    MouseButton, MouseScrollDelta, SetMouseFocus};
+    MouseButton, MouseScrollDelta};
 
 /// This enum is used by our event handling closures to return useful
 /// information and commands back to the main window. 
@@ -32,10 +32,10 @@ use enamel::{Pane, Event, EventRemainder, UiRequest, TextBox, RectButton, HexBut
 // #[derive(Clone, Debug)]
 pub enum BackgroundCtl {
     None,
-    // Closed,
     Event(Event),
-    SetMouseFocus(bool),
-    TextEntered(String),
+    Start,
+    Stop,
+    Text(String),
 }
 
 impl Default for BackgroundCtl {
@@ -45,17 +45,9 @@ impl Default for BackgroundCtl {
 }
 
 impl EventRemainder for BackgroundCtl {
-    // fn closed() -> Self {
-    //     BackgroundCtl::Closed
-    // }
-
     fn event(event: Event) -> Self {
         BackgroundCtl::Event(event)
     }
-
-    // fn set_mouse_focus(focus: bool) -> Self {
-    //     BackgroundCtl::SetMouseFocus(focus)
-    // }
 }
 
 
@@ -89,18 +81,12 @@ impl<'a> Background {
                 Event::MouseWheel(delta) => self.handle_mouse_wheel(delta),
                 Event::MouseInput(st, btn) => self.handle_mouse_input(st, btn),
                 Event::Touch(touch) => println!("Touch recieved: {:?}", touch),
-                Event::Closed => { 
-                    self.closed = true;
-                    printlnc!(yellow: "Exiting.");
-                },
+                Event::Closed => self.handle_closed(),
                 _ => (),
             } }
-	        BackgroundCtl::TextEntered(s) => printlnc!(royal_blue: "String entered: '{}'.", &s),
-	        // BackgroundCtl::Closed => { 
-         //        self.closed = true;
-         //        printlnc!(yellow_bold: "Exiting.");
-         //    },
-	        _ => (),           
+	        BackgroundCtl::Text(s) => printlnc!(royal_blue: "String entered: '{}'.", &s),
+            BackgroundCtl::Start => printlnc!(lime: "Starting something!"),
+            BackgroundCtl::Stop => printlnc!(red: "Stopping everything!"),
 	    }
 	}
 
@@ -134,16 +120,11 @@ impl<'a> Background {
 	        _ => (),
 	    }
 	}
-}
 
-impl<'a> SetMouseFocus for Background {
-	fn set_mouse_focus(&mut self, focus: bool) {
-		if focus {
-			printlnc!(dark_grey: "Background now has mouse focus.");
-		} else {
-			printlnc!(dark_grey: "Background lost mouse focus.");
-		}
-	}
+    fn handle_closed(&mut self) {
+        self.closed = true;
+        printlnc!(yellow: "Exiting.");
+    }
 }
 
 
@@ -169,7 +150,7 @@ fn main() {
         .element(HexButton::new([1.0, -1.0, 0.0], (-0.20, 0.37), 1.8, 
                 "Next", enamel::ui::C_ORANGE)
             .mouse_event_handler(Box::new(|_, _| {
-            	println!("This button does even less than the one next to it.");
+            	println!("This button does less than the one next to it.");
                 (UiRequest::None, BackgroundCtl::None)
             }))
         )
@@ -177,7 +158,7 @@ fn main() {
                 "Text:", enamel::ui::C_ORANGE, "", Box::new(|key_st, vk_code, kb_st, text_string| {
                     enamel::ui::key_into_string(key_st, vk_code, kb_st, text_string);
 
-                    (UiRequest::None, BackgroundCtl::TextEntered(text_string.clone()))
+                    (UiRequest::None, BackgroundCtl::Text(text_string.clone()))
                 } )
             )
             .mouse_event_handler(Box::new(|_, _| {
@@ -190,21 +171,21 @@ fn main() {
                 "Start", enamel::ui::C_ORANGE)
             .mouse_event_handler(Box::new(|_, _| {
             	printlnc!(lime_bold: "Start clicked!");
-                (UiRequest::None, BackgroundCtl::None)
+                (UiRequest::None, BackgroundCtl::Start)
             }))
         )
         .element(RectButton::new([1.0, -1.0, 0.0], (-0.20, 0.17), 4.8, 
                 "Stop", enamel::ui::C_ORANGE)
             .mouse_event_handler(Box::new(|_, _| {                     
                 printlnc!(red_bold: "Stop clicked!");
-                (UiRequest::None, BackgroundCtl::None)
+                (UiRequest::None, BackgroundCtl::Stop)
             }))
         )
         .element(RectButton::new([1.0, -1.0, 0.0], (-0.20, 0.07), 4.8, 
                 "Exit", enamel::ui::C_ORANGE)
             .mouse_event_handler(Box::new(|_, _| {
                 printlnc!(yellow_bold: "Exit clicked!");
-                (UiRequest::None, BackgroundCtl::Closed)
+                (UiRequest::None, BackgroundCtl::Event(Event::Closed))
             }))
         )
         .init();
@@ -212,7 +193,7 @@ fn main() {
     // This can be whatever we want as long as it implements `SetMouseFocus`:
     let mut background = Background::new();
 
-    printlnc!(white: "Enamel 'basics' example running. Press 'ctrl + q' or \
+    printlnc!(white: "Enamel 'typical' example running. Press 'ctrl + q' or \
         push the 'Exit' button to quit.");
 
     loop {
@@ -222,12 +203,11 @@ fn main() {
 
         // Check input events:
         for ev in display.poll_events() {
-            let rmndr = ui.handle_event(ev, /*&mut background*/);
-            background.handle_event_remainder(rmndr);
+            background.handle_event_remainder(ui.handle_event(ev));
         }
 
         // Draw UI:
-        ui.draw(&mut target, /*&mut background*/);
+        ui.draw(&mut target);
 
         // Swap buffers:
         target.finish().unwrap();

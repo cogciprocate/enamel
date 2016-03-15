@@ -17,7 +17,7 @@ pub use self::pane::Pane;
 pub use self::shape_2d::Shape2d;
 pub use self::vertex::Vertex;
 pub use self::traits::{CustomEventRemainder, EventRemainder, SetMouseFocus};
-pub use self::types::{/*MouseInputHandler, KeyboardInputHandler,*/ MouseEventHandler, KeyboardEventHandler};
+pub use self::aliases::{MouseEventHandler, KeyboardEventHandler};
 pub use self::enums::{TextAlign, UiRequest, EventRemainderOld, HandlerOption};
 pub use self::functions::{ key_into_string, map_vkc };
 
@@ -34,22 +34,15 @@ pub const SUBSUBDEPTH: f32 = 0.000244140625;
 mod traits {
     use std::fmt::{Debug, Formatter, Result as FmtResult};
     use std::default::Default;
-    // use glium::glutin::{MouseScrollDelta, ElementState, MouseButton, VirtualKeyCode, Event};
     use glium::glutin::Event;
 
+    // TODO: DEPRICATE:
     pub trait SetMouseFocus {
         fn set_mouse_focus(&mut self, bool);
     }
 
     pub trait EventRemainder: Default {
-        // TODO: DEPRICATE: As soon as custom keyboard input handlers are done:
-        // fn closed() -> Self;
         fn event(Event) -> Self;
-        // fn keyboard_input(ElementState, u8, Option<VirtualKeyCode>) -> Self;
-        // fn mouse_moved((i32, i32)) -> Self;
-        // fn mouse_wheel(MouseScrollDelta) -> Self;
-        // fn mouse_input(ElementState, MouseButton) -> Self;
-        // fn set_mouse_focus(bool) -> Self;
     }
 
     pub trait CustomEventRemainder: CustomEventRemainderClone + CustomEventRemainderDebug {}
@@ -88,19 +81,24 @@ mod traits {
 }
 
 
-mod types {
+mod aliases {
     use glium::glutin::{ElementState, MouseButton, VirtualKeyCode};
     use ui::{UiRequest, KeyboardState};
-
-    // pub type MouseInputHandler = Box<FnMut(ElementState, MouseButton) -> (UiRequest, EventRemainderOld)>;
-
-    // pub type KeyboardInputHandler = Box<FnMut(ElementState, Option<VirtualKeyCode>, &KeyboardState, 
-    //     &mut String) -> (UiRequest, EventRemainderOld)>;
 
     pub type MouseEventHandler<T> = Box<FnMut(ElementState, MouseButton) -> (UiRequest, T)>;
 
     pub type KeyboardEventHandler<T> = Box<FnMut(ElementState, Option<VirtualKeyCode>, &KeyboardState, 
         &mut String) -> (UiRequest, T)>;
+}
+
+
+mod structs {
+    #![allow(dead_code)]
+    use glium::glutin::{VirtualKeyCode};
+
+    struct KeyCombo {
+        keys: Vec<VirtualKeyCode>,
+    }
 }
 
 

@@ -2,7 +2,7 @@
 name = "enamel"
 version = "0.2.0"
 dependencies = [
- "colorify 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "colorify 0.1.0",
  "glium 0.13.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "glium_text 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -77,7 +77,6 @@ dependencies = [
 [[package]]
 name = "colorify"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "core-foundation"

@@ -92,8 +92,6 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
 
             indices.extend_from_slice(&element.indices(vertices.len() as u16));
 
-            // let vertices_idz = vertices.len();
-
             vertices.extend_from_slice(&element.vertices(
                 self.display.get_framebuffer_dimensions(), self.scale,
             ));            
@@ -106,8 +104,8 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
         self
     }
 
-    pub fn draw<S>(&mut self, target: &mut S, /*background: &mut B*/) 
-            where S: Surface, /*B: SetMouseFocus */
+    pub fn draw<S>(&mut self, target: &mut S) 
+            where S: Surface
     {
         if self.vbo.is_none() || self.ibo.is_none() { 
             panic!("Ui::draw(): Buffers not initialized.") 
@@ -123,7 +121,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
         self.surface_dims = target.get_dimensions();
 
         // Update mouse focus:
-        self.update_mouse_focus(/*background*/);
+        self.update_mouse_focus();
 
         // Draw elements:
         target.draw((self.vbo.as_ref().unwrap(), EIAttribs { len: 1 }), self.ibo.as_ref().unwrap(), 
@@ -141,11 +139,8 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
         }
     }
 
-    pub fn handle_event/*<B: SetMouseFocus>*/(&mut self, event: Event, /*background: &mut B*/) -> R {
+    pub fn handle_event(&mut self, event: Event) -> R {
         match event.clone() {
-            // Event::Closed => {                    
-            //     R::closed()
-            // },
             Event::Resized(..) => {
                 self.refresh_vertices();
                 R::event(event)
@@ -160,7 +155,6 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
             },
             Event::MouseMoved(p) => {
                 self.mouse_state.update_position(p);
-                // self.update_mouse_focus(background);
                 R::event(event)
             },
             Event::MouseWheel(delta) => {
@@ -243,7 +237,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
         }
     }
 
-    pub fn update_mouse_focus/*<B: SetMouseFocus>*/(&mut self, /*background: &mut B*/) {
+    pub fn update_mouse_focus(&mut self) {
         if self.mouse_state.any_pressed() { return; }
 
         // Update elements if the mouse has moved since last time

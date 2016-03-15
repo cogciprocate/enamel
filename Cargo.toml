@@ -15,5 +15,8 @@ exclude = ["target/*", "*.png", "bak/*"]
 glium = "0.13"
 glium_text = "0.8"
 
-[dev-dependencies]
-colorify = "0.1"
+# [dev-dependencies]
+# colorify = "0.1"
+
+[dev-dependencies.colorify]
+path = "/home/nick/src/github.com/cogciprocate/colorify"
