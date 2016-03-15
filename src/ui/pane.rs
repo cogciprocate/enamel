@@ -143,12 +143,12 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
 
     pub fn handle_event/*<B: SetMouseFocus>*/(&mut self, event: Event, /*background: &mut B*/) -> R {
         match event.clone() {
-            Event::Closed => {                    
-                R::closed()
-            },
+            // Event::Closed => {                    
+            //     R::closed()
+            // },
             Event::Resized(..) => {
                 self.refresh_vertices();
-                R::default()
+                R::event(event)
             },
             Event::KeyboardInput(key_state, _, vk_code) => {
                 self.handle_keyboard_input(key_state, vk_code, event)
@@ -166,7 +166,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
             Event::MouseWheel(delta) => {
                 R::event(event)
             },
-            _ => R::default()
+            _ => R::event(event)
         }
     }
     
@@ -182,7 +182,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
             match key_state {
                 ElementState::Pressed => { match vk_code {
                     Some(vkc) => { match vkc {
-                        VirtualKeyCode::Q => R::closed(),
+                        VirtualKeyCode::Q => R::event(Event::Closed),
                         _ => R::event(event),
                     } },
                     None => R::event(event),

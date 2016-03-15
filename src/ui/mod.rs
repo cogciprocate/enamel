@@ -17,7 +17,7 @@ pub use self::pane::Pane;
 pub use self::shape_2d::Shape2d;
 pub use self::vertex::Vertex;
 pub use self::traits::{CustomEventRemainder, EventRemainder, SetMouseFocus};
-pub use self::types::{MouseInputHandler, KeyboardInputHandler, MouseEventHandler, KeyboardEventHandler};
+pub use self::types::{/*MouseInputHandler, KeyboardInputHandler,*/ MouseEventHandler, KeyboardEventHandler};
 pub use self::enums::{TextAlign, UiRequest, EventRemainderOld, HandlerOption};
 pub use self::functions::{ key_into_string, map_vkc };
 
@@ -43,7 +43,7 @@ mod traits {
 
     pub trait EventRemainder: Default {
         // TODO: DEPRICATE: As soon as custom keyboard input handlers are done:
-        fn closed() -> Self;
+        // fn closed() -> Self;
         fn event(Event) -> Self;
         // fn keyboard_input(ElementState, u8, Option<VirtualKeyCode>) -> Self;
         // fn mouse_moved((i32, i32)) -> Self;
@@ -90,12 +90,12 @@ mod traits {
 
 mod types {
     use glium::glutin::{ElementState, MouseButton, VirtualKeyCode};
-    use ui::{EventRemainderOld, UiRequest, KeyboardState};
+    use ui::{UiRequest, KeyboardState};
 
-    pub type MouseInputHandler = Box<FnMut(ElementState, MouseButton) -> (UiRequest, EventRemainderOld)>;
+    // pub type MouseInputHandler = Box<FnMut(ElementState, MouseButton) -> (UiRequest, EventRemainderOld)>;
 
-    pub type KeyboardInputHandler = Box<FnMut(ElementState, Option<VirtualKeyCode>, &KeyboardState, 
-        &mut String) -> (UiRequest, EventRemainderOld)>;
+    // pub type KeyboardInputHandler = Box<FnMut(ElementState, Option<VirtualKeyCode>, &KeyboardState, 
+    //     &mut String) -> (UiRequest, EventRemainderOld)>;
 
     pub type MouseEventHandler<T> = Box<FnMut(ElementState, MouseButton) -> (UiRequest, T)>;
 

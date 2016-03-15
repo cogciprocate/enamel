@@ -420,7 +420,7 @@ impl<'a, R> Element<R> where R: EventRemainder {
                             (UiRequest::Refresh, R::default())
                         }
                     } else {
-                        (UiRequest::Refresh, R::event(event))
+                        (UiRequest::None, R::event(event))
                     }
                 },
             }

@@ -32,7 +32,7 @@ use enamel::{Pane, Event, EventRemainder, UiRequest, TextBox, RectButton, HexBut
 // #[derive(Clone, Debug)]
 pub enum BackgroundCtl {
     None,
-    Closed,
+    // Closed,
     Event(Event),
     SetMouseFocus(bool),
     TextEntered(String),
@@ -45,9 +45,9 @@ impl Default for BackgroundCtl {
 }
 
 impl EventRemainder for BackgroundCtl {
-    fn closed() -> Self {
-        BackgroundCtl::Closed
-    }
+    // fn closed() -> Self {
+    //     BackgroundCtl::Closed
+    // }
 
     fn event(event: Event) -> Self {
         BackgroundCtl::Event(event)
@@ -89,17 +89,17 @@ impl<'a> Background {
                 Event::MouseWheel(delta) => self.handle_mouse_wheel(delta),
                 Event::MouseInput(st, btn) => self.handle_mouse_input(st, btn),
                 Event::Touch(touch) => println!("Touch recieved: {:?}", touch),
+                Event::Closed => { 
+                    self.closed = true;
+                    printlnc!(yellow: "Exiting.");
+                },
                 _ => (),
             } }
-            // BackgroundCtl::KeyboardInput()
-	        // BackgroundCtl::MouseWheel(delta) => self.handle_mouse_wheel(delta),
-	        // BackgroundCtl::MouseInput(st, btn) => self.handle_mouse_input(st, btn),
-	        // BackgroundCtl::MouseMoved(pos) => self.handle_mouse_moved(pos),
 	        BackgroundCtl::TextEntered(s) => printlnc!(royal_blue: "String entered: '{}'.", &s),
-	        BackgroundCtl::Closed => { 
-                self.closed = true;
-                printlnc!(yellow_bold: "Exiting.");
-            },
+	        // BackgroundCtl::Closed => { 
+         //        self.closed = true;
+         //        printlnc!(yellow_bold: "Exiting.");
+         //    },
 	        _ => (),           
 	    }
 	}
@@ -203,7 +203,7 @@ fn main() {
         .element(RectButton::new([1.0, -1.0, 0.0], (-0.20, 0.07), 4.8, 
                 "Exit", enamel::ui::C_ORANGE)
             .mouse_event_handler(Box::new(|_, _| {
-                printlnc!(yellow: "Exit clicked!");
+                printlnc!(yellow_bold: "Exit clicked!");
                 (UiRequest::None, BackgroundCtl::Closed)
             }))
         )
