@@ -21,6 +21,10 @@ pub use self::aliases::{MouseEventHandler, KeyboardEventHandler};
 pub use self::enums::{TextAlign, UiRequest, EventRemainderOld, HandlerOption};
 pub use self::functions::{ key_into_string, map_vkc };
 
+pub const TOP_LEFT: [f32; 3] = [-1.0, 1.0, 0.0];
+pub const TOP_RIGHT: [f32; 3] = [1.0, 1.0, 0.0];
+pub const BOTTOM_LEFT: [f32; 3] = [-1.0, -1.0, 0.0];
+pub const BOTTOM_RIGHT: [f32; 3] = [1.0, -1.0, 0.0];
 
 pub const C_PINK: [f32; 4] = [0.990, 0.490, 0.700, 1.0];
 pub const C_ORANGE: [f32; 4] = [0.960, 0.400, 0.0, 1.0];
