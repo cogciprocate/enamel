@@ -14,9 +14,10 @@ exclude = ["target/*", "*.png", "bak/*"]
 [dependencies]
 glium = "0.13"
 glium_text = "0.8"
+find_folder = "0.3"
 
-# [dev-dependencies]
-# colorify = "0.1"
+[dev-dependencies]
+colorify = "0.1"
 
-[dev-dependencies.colorify]
-path = "/home/nick/src/github.com/cogciprocate/colorify"
+# [dev-dependencies.colorify]
+# path = "/home/nick/src/github.com/cogciprocate/colorify"

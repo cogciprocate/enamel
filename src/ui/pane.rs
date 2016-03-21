@@ -1,4 +1,5 @@
 #![allow(dead_code, unused_variables)]
+// use find_folder::Search;
 use glium_text::{self, TextSystem, FontTexture, TextDisplay};
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::{self, VertexBuffer, IndexBuffer, Program, DrawParameters, Surface};
@@ -51,9 +52,11 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
 
         // Text font:
         let font_size = 24;
+        // let font_file = Search::ParentsThenKids(3, 3).for_folder("assets").unwrap()
+        //     .join("fonts/NotoSans/NotoSans-Bold.ttf");
         let font_texture = FontTexture::new(display, &include_bytes!(
                 // "/home/nick/projects/vibi/assets/fonts/nanum/NanumBarunGothic.ttf"
-                "/home/nick/projects/vibi/assets/fonts/NotoSans/NotoSans-Bold.ttf"
+                "assets/fonts/NotoSans/NotoSans-Bold.ttf"
             )[..], font_size).unwrap();
 
         Pane { 

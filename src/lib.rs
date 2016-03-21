@@ -2,6 +2,7 @@
 
 #[macro_use] extern crate glium;
 extern crate glium_text;
+extern crate find_folder;
 
 pub mod ui;
 // // [TEMP]:

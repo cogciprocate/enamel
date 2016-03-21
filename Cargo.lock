@@ -2,7 +2,8 @@
 name = "enamel"
 version = "0.2.0"
 dependencies = [
- "colorify 0.1.0",
+ "colorify 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "find_folder 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "glium 0.13.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "glium_text 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -77,6 +78,7 @@ dependencies = [
 [[package]]
 name = "colorify"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "core-foundation"
@@ -148,6 +150,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "find_folder"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "freetype-sys"
