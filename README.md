@@ -15,7 +15,7 @@ Add the following to your `Cargo.toml`:
 
 ```
 [dependencies]
-enamel = "0.1"
+enamel = "0.2"
 ```
 
 See [examples] for usage. Obviously documentation is sparse but there should
