@@ -1,14 +1,13 @@
 // use super::{};
 // use util;
 
-use ui::{self, Shape2d, Element, ElementKind, KeyboardEventHandler, EventRemainder};
+use ui::{self, Shape2d, Element, ElementKind, EventRemainder};
 
 pub struct TextBox;
 
 impl TextBox {
     pub fn new<R>(anchor_pos: [f32; 3], offset: (f32, f32), extra_width: f32,
-                label: &str, color: [f32; 4], sub_text_string: &str, 
-                key_handler: KeyboardEventHandler<R>) 
+                label: &str, color: [f32; 4], sub_text_string: &str) 
             -> Element<R> where R: EventRemainder
     {
         let shape = Shape2d::hexagon_panel(1.0, extra_width, 0.0, color);
@@ -16,7 +15,7 @@ impl TextBox {
         Element::new(ElementKind::TextBox(TextBox), anchor_pos, [offset.0, offset.1, 0.0], shape)
             .text_string(label)
             .text_offset(((-extra_width / 2.0) - 1.5, 0.0))    
-            .sub(TextField::new(anchor_pos, offset, extra_width, sub_text_string, key_handler))
+            .sub(TextField::new(anchor_pos, offset, extra_width, sub_text_string))
     }
 }
 
@@ -24,8 +23,8 @@ impl TextBox {
 pub struct TextField;
 
 impl TextField {
-    pub fn new<R>(anchor_pos: [f32; 3], offset: (f32, f32), width: f32, text_string: &str,
-                key_handler: KeyboardEventHandler<R>) -> Element<R> where R: EventRemainder
+    pub fn new<R>(anchor_pos: [f32; 3], offset: (f32, f32), width: f32, text_string: &str) 
+            -> Element<R> where R: EventRemainder
     {
         let color = [1.0, 1.0, 1.0, 1.0];
         let shape = Shape2d::rectangle(0.8, width + 2.4, -0.1, color);
@@ -41,6 +40,5 @@ impl TextField {
             .border(0.05, ui::C_BLACK, false)
             .text_offset(text_offset)
             .text_string(text_string)
-            .keyboard_event_handler(key_handler)
     }
 }

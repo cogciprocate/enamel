@@ -1,6 +1,6 @@
 [package]
 name = "enamel"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Nick Sanders <cogciprocate@gmail.com>"]
 description = "A simple OpenGL interface overlay for use with Glium."
 documentation = "https://github.com/cogciprocate/enamel"
