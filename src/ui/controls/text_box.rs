@@ -40,5 +40,6 @@ impl TextField {
             .border(0.05, ui::C_BLACK, false)
             .text_offset(text_offset)
             .text_string(text_string)
+            .keyboard_event_placeholder()
     }
 }

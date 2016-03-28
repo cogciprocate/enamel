@@ -16,6 +16,7 @@ extern crate enamel;
 use glium::{DisplayBuild, Surface};
 use enamel::{ui, Pane, Event, EventRemainder, UiRequest, TextBox, RectButton, HexButton, ElementState, 
     MouseButton, MouseScrollDelta};
+use enamel::ui::C_ORANGE as ORANGE;
 
 
 /// This enum is used by our event handling closures to return useful
@@ -136,49 +137,42 @@ fn main() {
 
     // Primary user interface elements:
     let mut ui = Pane::new(&display)
-        .element(HexButton::new(ui::BOTTOM_RIGHT, (-0.57, 0.37), 1.8, 
-                "Previous", enamel::ui::C_ORANGE)
+        .element(HexButton::new(ui::BOTTOM_RIGHT, (-0.57, 0.37), 1.8, "Previous", ORANGE)
             .mouse_event_handler(Box::new(|_, _| {
             	println!("This button doesn't do much.");
                 (UiRequest::None, BackgroundCtl::None)
             }))
         )
-        .element(HexButton::new(ui::BOTTOM_RIGHT, (-0.20, 0.37), 1.8, 
-                "Next", enamel::ui::C_ORANGE)
+        .element(HexButton::new(ui::BOTTOM_RIGHT, (-0.20, 0.37), 1.8, "Next", ORANGE)
             .mouse_event_handler(Box::new(|_, _| {
             	println!("This button does less than the one next to it.");
                 (UiRequest::None, BackgroundCtl::None)
             }))
         )
-        .element(TextBox::new(ui::BOTTOM_RIGHT, (-0.385, 0.27), 4.45, 
-                "Text:", enamel::ui::C_ORANGE, "", Box::new(|key_st, vk_code, kb_st, text_string| {
-                    enamel::ui::key_into_string(key_st, vk_code, kb_st, text_string);
-
-                    (UiRequest::None, BackgroundCtl::Text(text_string.clone()))
-                } )
-            )
+        .element(TextBox::new(ui::BOTTOM_RIGHT, (-0.385, 0.27), 4.45, "Text:", ORANGE, "")
+            .keyboard_event_handler(Box::new(|key_st, vk_code, kb_st, text_string| {
+                enamel::ui::key_into_string(key_st, vk_code, kb_st, text_string);
+                (UiRequest::None, BackgroundCtl::Text(text_string.clone()))
+            }))
             .mouse_event_handler(Box::new(|_, _| {
             	println!("TextBox clicked and now has keyboard focus.");
                 (UiRequest::KeyboardFocus(true), BackgroundCtl::None)
-            } ))
+            }))
 
         )
-        .element(RectButton::new(ui::BOTTOM_RIGHT, (-0.57, 0.17), 4.8, 
-                "Start", enamel::ui::C_ORANGE)
+        .element(RectButton::new(ui::BOTTOM_RIGHT, (-0.57, 0.17), 4.8, "Start", ORANGE)
             .mouse_event_handler(Box::new(|_, _| {
             	printlnc!(lime_bold: "Start clicked!");
                 (UiRequest::None, BackgroundCtl::Start)
             }))
         )
-        .element(RectButton::new(ui::BOTTOM_RIGHT, (-0.20, 0.17), 4.8, 
-                "Stop", enamel::ui::C_ORANGE)
+        .element(RectButton::new(ui::BOTTOM_RIGHT, (-0.20, 0.17), 4.8, "Stop", ORANGE)
             .mouse_event_handler(Box::new(|_, _| {                     
                 printlnc!(red_bold: "Stop clicked!");
                 (UiRequest::None, BackgroundCtl::Stop)
             }))
         )
-        .element(RectButton::new(ui::BOTTOM_RIGHT, (-0.20, 0.07), 4.8, 
-                "Exit", enamel::ui::C_ORANGE)
+        .element(RectButton::new(ui::BOTTOM_RIGHT, (-0.20, 0.07), 4.8, "Exit", ORANGE)
             .mouse_event_handler(Box::new(|_, _| {
                 printlnc!(yellow_bold: "Exit clicked!");
                 (UiRequest::None, BackgroundCtl::Event(Event::Closed))

@@ -183,19 +183,30 @@ impl<'a, R> Element<R> where R: EventRemainder {
         }
     }
 
-    pub fn mouse_event_handler(mut self, mouse_event_handler: MouseEventHandler<R>) -> Element<R> {
-        self.mouse_event_handler = HandlerOption::Fn(mouse_event_handler);
+    pub fn mouse_event_handler(mut self, handler: MouseEventHandler<R>) -> Element<R> {
+        self.mouse_event_handler = HandlerOption::Fn(handler);
         self
     }
 
-    pub fn keyboard_event_handler(mut self, keyboard_event_handler: KeyboardEventHandler<R>) -> Element<R> {
-        if let HandlerOption::None = self.keyboard_event_handler {
-                self.keyboard_event_handler = HandlerOption::Fn(keyboard_event_handler);
-                self
-        } else {
-            panic!("Element::keyboard_event_handler(): Keyboard input already assigned \
-                to: '{:?}'", self.keyboard_event_handler);
+    pub fn keyboard_event_handler(mut self, handler: KeyboardEventHandler<R>) 
+            -> Element<R> 
+    {
+        match self.keyboard_event_handler {
+            HandlerOption::Sub(idx) => {
+                self.sub_elements[idx].keyboard_event_handler = HandlerOption::Fn(handler);
+            },
+            HandlerOption::None => self.keyboard_event_handler = HandlerOption::Fn(handler),
+            _ => panic!("Element::keyboard_event_handler(): Keyboard input already assigned \
+                to: '{:?}'", self.keyboard_event_handler),
         }
+
+        self
+    }
+
+    pub fn keyboard_event_placeholder(mut self) -> Element<R> {
+        assert!(self.keyboard_event_handler.is_none());
+        self.keyboard_event_handler = HandlerOption::FnPlaceholder;
+        self
     }
 
     pub fn sub(mut self, mut sub_element: Element<R>) -> Element<R> {

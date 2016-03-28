@@ -129,6 +129,7 @@ mod enums {
 
     pub enum HandlerOption<T> {
         None,
+        FnPlaceholder,
         Fn(T),
         Sub(usize),    
     }
@@ -148,14 +149,23 @@ mod enums {
                 true
             }
         }
+
+        pub fn is_none(&self) -> bool {
+            if let &HandlerOption::None = self {
+                true
+            } else {
+                false
+            }
+        }
     }
 
     impl<T> Debug for HandlerOption<T> {
         fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
             match self {
+                &HandlerOption::None => write!(f, "HandlerOption::None"),
+                &HandlerOption::FnPlaceholder => write!(f, "HandlerOption::FnPlaceholder"),
                 &HandlerOption::Fn(_) => write!(f, "HandlerOption::Fn(_)"),
                 &HandlerOption::Sub(idx) => write!(f, "HandlerOption::Sub({})", idx),
-                &HandlerOption::None => write!(f, "HandlerOption::None"),
             }
         }
     }
