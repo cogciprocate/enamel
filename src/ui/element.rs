@@ -266,12 +266,12 @@ impl<'a, R> Element<R> where R: EventRemainder {
             };
 
         // Aspect ratio:
-        let ar = window_dims.0 as f32 / window_dims.1 as f32;        
+        let ar = window_dims.1 as f32 / window_dims.0 as f32;        
 
-        self.cur_scale = [self.base_scale.0 * ui_scale / ar, self.base_scale.1 * ui_scale, ui_scale];
+        self.cur_scale = [self.base_scale.0 * ui_scale * ar, self.base_scale.1 * ui_scale, ui_scale];
         
         self.cur_center_pos = [
-            self.anchor_point[0] + ((self.anchor_ofs[0] / ar) * ui_scale),
+            self.anchor_point[0] + (self.anchor_ofs[0] * ui_scale * ar),
             self.anchor_point[1] + (self.anchor_ofs[1] * ui_scale),
             (self.anchor_point[2] + self.anchor_ofs[2]) * ui_scale,
         ];
