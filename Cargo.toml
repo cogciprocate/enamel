@@ -12,8 +12,8 @@ license = "MIT"
 exclude = ["target/*", "*.png", "bak/*"]
 
 [dependencies]
-glium = "0.13"
-glium_text = "0.8"
+glium = "0.14"
+glium_text = "0.9"
 find_folder = "0.3"
 
 [dev-dependencies]

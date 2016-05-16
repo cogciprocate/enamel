@@ -5,7 +5,7 @@ use glium::backend::glutin_backend::GlutinFacade;
 use glium::{self, VertexBuffer, IndexBuffer, Program, DrawParameters, Surface};
 use glium::vertex::{EmptyInstanceAttributes as EIAttribs};
 use glium::glutin::{ElementState, MouseButton, Event, VirtualKeyCode};
-use ui::{self, Vertex, Element, MouseState, KeyboardState, UiRequest, EventRemainder, SetMouseFocus};
+use ui::{self, Vertex, Element, MouseState, KeyboardState, UiRequest, EventRemainder};
 
 const TWOSR3: f32 = 1.15470053838;
 const DEFAULT_UI_SCALE: f32 = 0.9;
@@ -156,11 +156,11 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                 self.update_mouse_focus();
                 self.handle_mouse_input(state, button, event)
             },
-            Event::MouseMoved(p) => {
-                self.mouse_state.update_position(p);
+            Event::MouseMoved(p_x, p_y) => {
+                self.mouse_state.update_position((p_x, p_y));
                 R::event(event)
             },
-            Event::MouseWheel(delta) => {
+            Event::MouseWheel(delta, _) => {
                 R::event(event)
             },
             _ => R::event(event)

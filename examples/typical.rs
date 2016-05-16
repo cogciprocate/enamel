@@ -74,8 +74,8 @@ impl<'a> Background {
             BackgroundCtl::Event(e) => { match e {
                 Event::KeyboardInput(st, key, vkc) => 
                     println!("Key: 0x{:02X} ({:?}) has been {:?}.", key, enamel::ui::map_vkc(vkc), st),
-                Event::MouseMoved(pos) => self.handle_mouse_moved(pos),
-                Event::MouseWheel(delta) => self.handle_mouse_wheel(delta),
+                Event::MouseMoved(p_x, p_y) => self.handle_mouse_moved((p_x, p_y)),
+                Event::MouseWheel(delta, _) => self.handle_mouse_wheel(delta),
                 Event::MouseInput(st, btn) => self.handle_mouse_input(st, btn),
                 Event::Touch(touch) => println!("Touch recieved: {:?}", touch),
                 Event::Closed => self.handle_closed(),
@@ -131,8 +131,8 @@ fn main() {
         .with_depth_buffer(24)
         .with_dimensions(600, 800)
         .with_title("Button Sample".to_string())
-        .with_multisampling(8)
-        .with_vsync()
+        // .with_multisampling(4)
+        // .with_vsync()
         .build_glium().unwrap();
 
     // Primary user interface elements:
