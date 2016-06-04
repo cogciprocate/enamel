@@ -1,4 +1,4 @@
-//! This example demonstrates how Enamel would generally be used. 
+//! This example demonstrates how Enamel would generally be used.
 //!
 //! One trait must be implemented to use custom handler closures. In this
 //! example we've implemented it on the enum, `BackgroundCtl` but it can be
@@ -14,13 +14,13 @@ extern crate enamel;
 #[macro_use] extern crate colorify;
 
 use glium::{DisplayBuild, Surface};
-use enamel::{ui, Pane, Event, EventRemainder, UiRequest, TextBox, RectButton, HexButton, ElementState, 
+use enamel::{ui, Pane, Event, EventRemainder, UiRequest, TextBox, RectButton, HexButton, ElementState,
     MouseButton, MouseScrollDelta};
 use enamel::ui::C_ORANGE as ORANGE;
 
 
 /// This enum is used by our event handling closures to return useful
-/// information and commands back to the main window. 
+/// information and commands back to the main window.
 ///
 /// This can contain as many custom variants as we need (and doesn't even need
 /// to be an enum) but must implement `Default` and `EventRemainder` which are
@@ -72,7 +72,7 @@ impl<'a> Background {
 	    match rdr {
 	        BackgroundCtl::None => (),
             BackgroundCtl::Event(e) => { match e {
-                Event::KeyboardInput(st, key, vkc) => 
+                Event::KeyboardInput(st, key, vkc) =>
                     println!("Key: 0x{:02X} ({:?}) has been {:?}.", key, enamel::ui::map_vkc(vkc), st),
                 Event::MouseMoved(p_x, p_y) => self.handle_mouse_moved((p_x, p_y)),
                 Event::MouseWheel(delta, _) => self.handle_mouse_wheel(delta),
@@ -103,15 +103,15 @@ impl<'a> Background {
 	fn handle_mouse_input(&self, btn_st: ElementState, btn: MouseButton) {
 	    match btn {
 	        MouseButton::Left => { match btn_st {
-                ElementState::Pressed => 
+                ElementState::Pressed =>
                     printlnc!(teal: "Left mouse button pressed on background."),
-                ElementState::Released => 
+                ElementState::Released =>
                     printlnc!(cyan: "Left mouse button released on background."),
             } },
             MouseButton::Right => { match btn_st {
-                ElementState::Pressed => 
+                ElementState::Pressed =>
                     printlnc!(magenta: "Right mouse button pressed on background."),
-                ElementState::Released => 
+                ElementState::Released =>
                     printlnc!(purple: "Right mouse button released on background."),
             } },
 	        _ => (),
@@ -131,7 +131,7 @@ fn main() {
         .with_depth_buffer(24)
         .with_dimensions(600, 800)
         .with_title("Button Sample".to_string())
-        // .with_multisampling(4)
+        .with_multisampling(8)
         // .with_vsync()
         .build_glium().unwrap();
 
@@ -167,7 +167,7 @@ fn main() {
             }))
         )
         .element(RectButton::new(ui::BOTTOM_RIGHT, (-0.20, 0.17), 4.8, "Stop", ORANGE)
-            .mouse_event_handler(Box::new(|_, _| {                     
+            .mouse_event_handler(Box::new(|_, _| {
                 printlnc!(red_bold: "Stop clicked!");
                 (UiRequest::None, BackgroundCtl::Stop)
             }))
