@@ -132,7 +132,7 @@ fn main() {
         .with_dimensions(600, 800)
         .with_title("Button Sample".to_string())
         .with_multisampling(8)
-        // .with_vsync()
+        .with_vsync()
         .build_glium().unwrap();
 
     // Primary user interface elements:
