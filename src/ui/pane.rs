@@ -59,7 +59,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                 "assets/fonts/NotoSans/NotoSans-Bold.ttf"
             )[..], font_size).unwrap();
 
-        Pane { 
+        Pane {
             vbo: vbo,
             ibo: ibo,
             elements: Vec::new(),
@@ -78,8 +78,8 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
     }
 
     pub fn element(mut self, element: Element<R>) -> Pane<'d, R> {
-        if self.vbo.is_some() || self.ibo.is_some() { 
-            panic!("Ui::element(): [FIXME]: Cannot [yet] add element after initialization.") 
+        if self.vbo.is_some() || self.ibo.is_some() {
+            panic!("Ui::element(): [FIXME]: Cannot [yet] add element after initialization.")
         }
 
         self.elements.push(element);
@@ -97,21 +97,21 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
 
             vertices.extend_from_slice(&element.vertices(
                 self.display.get_framebuffer_dimensions(), self.scale,
-            ));            
+            ));
         }
 
         self.vbo = Some(VertexBuffer::dynamic(self.display, &vertices).unwrap());
-        self.ibo = Some(IndexBuffer::new(self.display, glium::index::PrimitiveType::TrianglesList, 
+        self.ibo = Some(IndexBuffer::new(self.display, glium::index::PrimitiveType::TrianglesList,
             &indices).unwrap());
 
         self
     }
 
-    pub fn draw<S>(&mut self, target: &mut S) 
+    pub fn draw<S>(&mut self, target: &mut S)
             where S: Surface
     {
-        if self.vbo.is_none() || self.ibo.is_none() { 
-            panic!("Ui::draw(): Buffers not initialized.") 
+        if self.vbo.is_none() || self.ibo.is_none() {
+            panic!("Ui::draw(): Buffers not initialized.")
         }
 
         let model_color = ui::C_ORANGE;
@@ -127,17 +127,17 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
         self.update_mouse_focus();
 
         // Draw elements:
-        target.draw((self.vbo.as_ref().unwrap(), EIAttribs { len: 1 }), self.ibo.as_ref().unwrap(), 
+        target.draw((self.vbo.as_ref().unwrap(), EIAttribs { len: 1 }), self.ibo.as_ref().unwrap(),
             &self.program, &uniforms, &self.params).unwrap();
 
         // Draw element text:
         for element in self.elements.iter() {
             element.draw_text(&self.text_system, target, &self.font_texture);
 
-            let text_display = TextDisplay::new(&self.text_system, &self.font_texture, 
+            let text_display = TextDisplay::new(&self.text_system, &self.font_texture,
                 element.get_text());
 
-            glium_text::draw(&text_display, &self.text_system, target, 
+            glium_text::draw(&text_display, &self.text_system, target,
                 element.text_matrix(), element.text().get_color());
         }
     }
@@ -166,8 +166,8 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
             _ => R::event(event)
         }
     }
-    
-    fn handle_keyboard_input(&mut self, key_state: ElementState, vk_code: Option<VirtualKeyCode>, 
+
+    fn handle_keyboard_input(&mut self, key_state: ElementState, vk_code: Option<VirtualKeyCode>,
                 event: Event) -> R
     {
         // Update keyboard state (modifiers, etc.):
@@ -209,7 +209,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
 
                 match request {
                     UiRequest::KeyboardFocus(on) => {
-                        if on {                             
+                        if on {
                             self.keybd_focused = Some(ele_idx);
                             self.elements[ele_idx].set_keybd_focus(true);
                         } else {
@@ -285,7 +285,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
     }
 
     /// Recalculates positions of vertices and updates any other properties such as color.
-    // [FIXME]: Make something which doesn't need to rewrite every vertex. 
+    // [FIXME]: Make something which doesn't need to rewrite every vertex.
     //             Perhaps add an optional element index parameter.
     pub fn refresh_vertices(&mut self) {
         match self.vbo {
@@ -317,7 +317,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
 
     pub fn input_is_stale(&self) -> bool {
         self.mouse_state.is_stale()
-    }  
+    }
 }
 
 
@@ -337,9 +337,10 @@ static vertex_shader_src: &'static str = r#"
         gl_Position = vec4(position, 1.0);
 
         v_color = color;
-    };
+    }
+
 "#;
-        
+
 
 // Fragment Shader:
 #[allow(non_upper_case_globals)]
@@ -352,5 +353,6 @@ static fragment_shader_src: &'static str = r#"
 
     void main() {
         color = v_color;
-    };
+    }
+
 "#;
