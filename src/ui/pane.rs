@@ -50,7 +50,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
         let text_system = TextSystem::new(display);
 
         // Text font:
-        let font_size = 24;
+        let font_size = 36;
         let font_texture = FontTexture::new(display, &include_bytes!(
                 // "/home/nick/projects/vibi/assets/fonts/nanum/NanumBarunGothic.ttf"
                 "assets/fonts/NotoSans/NotoSans-Bold.ttf"

@@ -14,7 +14,7 @@ impl TextBox {
 
         Element::new(ElementKind::TextBox(TextBox), anchor_pos, [offset.0, offset.1, 0.0], shape)
             .text_string(label)
-            .text_offset(((-extra_width / 2.0) - 1.5, 0.2))
+            .text_offset(((-extra_width / 2.0) - 1.5, 0.16))
             .sub(TextField::new(anchor_pos, offset, extra_width, sub_text_string))
     }
 }
@@ -28,7 +28,7 @@ impl TextField {
     {
         let color = [1.0, 1.0, 1.0, 1.0];
         let shape = Shape2d::rectangle(0.8, width + 2.4, -0.1, color);
-        let text_offset = (-(shape.radii).0 + 0.16, 0.0);
+        let text_offset = (-(shape.radii).0 + 0.16, 0.16);
 
         let new_offset = [
             offset.0 + 0.06,

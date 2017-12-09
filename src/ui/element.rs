@@ -13,7 +13,7 @@ pub const BORDER_SHADE: f32 = 0.1;
 pub const DEPRESS_SHADE: f32 = 0.1;
 pub const DEFAULT_TEXT_COLOR: (f32, f32, f32, f32) = (0.01, 0.01, 0.01, 1.0);
 // pub const TEXT_BASE_SCALE: f32 = 0.39;
-pub const TEXT_BASE_SCALE: f32 = 1.0;
+pub const TEXT_BASE_SCALE: f32 = 0.8;
 
 // Notes:
 //

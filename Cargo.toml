@@ -12,15 +12,9 @@ license = "MIT"
 exclude = ["target/*", "*.png", "bak/*"]
 
 [dependencies]
-# glium = "0.14"
 glium = "0.17"
-# glium_text = "0.9"
-# glium_text_rusttype = "0.11"
-glium_text_rusttype = "*"
+glium_text_rusttype = "0.2"
 find_folder = "0.3"
 
 [dev-dependencies]
 colorify = "0.1"
-
-# [dev-dependencies.colorify]
-# path = "/home/nick/src/github.com/cogciprocate/colorify"
