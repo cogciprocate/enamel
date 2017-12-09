@@ -7,14 +7,14 @@ pub struct TextBox;
 
 impl TextBox {
     pub fn new<R>(anchor_pos: [f32; 3], offset: (f32, f32), extra_width: f32,
-                label: &str, color: [f32; 4], sub_text_string: &str) 
+                label: &str, color: [f32; 4], sub_text_string: &str)
             -> Element<R> where R: EventRemainder
     {
         let shape = Shape2d::hexagon_panel(1.0, extra_width, 0.0, color);
 
         Element::new(ElementKind::TextBox(TextBox), anchor_pos, [offset.0, offset.1, 0.0], shape)
             .text_string(label)
-            .text_offset(((-extra_width / 2.0) - 1.5, 0.0))    
+            .text_offset(((-extra_width / 2.0) - 1.5, 0.2))
             .sub(TextField::new(anchor_pos, offset, extra_width, sub_text_string))
     }
 }
@@ -23,7 +23,7 @@ impl TextBox {
 pub struct TextField;
 
 impl TextField {
-    pub fn new<R>(anchor_pos: [f32; 3], offset: (f32, f32), width: f32, text_string: &str) 
+    pub fn new<R>(anchor_pos: [f32; 3], offset: (f32, f32), width: f32, text_string: &str)
             -> Element<R> where R: EventRemainder
     {
         let color = [1.0, 1.0, 1.0, 1.0];
@@ -36,7 +36,7 @@ impl TextField {
             0.0,
         ];
 
-        Element::new(ElementKind::TextField, anchor_pos, new_offset, shape)        
+        Element::new(ElementKind::TextField, anchor_pos, new_offset, shape)
             .border(0.05, ui::C_BLACK, false)
             .text_offset(text_offset)
             .text_string(text_string)

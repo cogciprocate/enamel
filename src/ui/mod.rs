@@ -1,9 +1,9 @@
-#![allow(dead_code)]
+// #![allow(dead_code)]
 
 mod element;
 mod pane;
 mod shape_2d;
-mod text_properties;
+// mod text_properties;
 mod vertex;
 mod keyboard_state;
 mod mouse_state;
@@ -28,7 +28,7 @@ pub const BOTTOM_RIGHT: [f32; 3] = [1.0, -1.0, 0.0];
 
 pub const C_PINK: [f32; 4] = [0.990, 0.490, 0.700, 1.0];
 pub const C_ORANGE: [f32; 4] = [0.960, 0.400, 0.0, 1.0];
-pub const C_DARK_ORANGE: [f32; 4] = [0.384, 0.080, 0.0, 1.0]; 
+pub const C_DARK_ORANGE: [f32; 4] = [0.384, 0.080, 0.0, 1.0];
 pub const C_BLUE: [f32; 4] = [0.204, 0.396, 0.643, 1.0];
 pub const C_BLACK: [f32; 4] = [0.001, 0.001, 0.001, 1.0];
 pub const SUBDEPTH: f32 = -0.015625;
@@ -91,7 +91,7 @@ mod aliases {
 
     pub type MouseEventHandler<T> = Box<FnMut(ElementState, MouseButton) -> (UiRequest, T)>;
 
-    pub type KeyboardEventHandler<T> = Box<FnMut(ElementState, Option<VirtualKeyCode>, &KeyboardState, 
+    pub type KeyboardEventHandler<T> = Box<FnMut(ElementState, Option<VirtualKeyCode>, &KeyboardState,
         &mut String) -> (UiRequest, T)>;
 }
 
@@ -131,7 +131,7 @@ mod enums {
         None,
         FnPlaceholder,
         Fn(T),
-        Sub(usize),    
+        Sub(usize),
     }
 
     #[derive(Clone, PartialEq, Eq)]
@@ -176,8 +176,8 @@ mod functions {
     use glium::glutin::{VirtualKeyCode, ElementState};
     use ui::KeyboardState;
 
-    pub fn key_into_string(key_state: ElementState, vk_code: Option<VirtualKeyCode>, kb_state: &KeyboardState, 
-            string: &mut String) 
+    pub fn key_into_string(key_state: ElementState, vk_code: Option<VirtualKeyCode>, kb_state: &KeyboardState,
+            string: &mut String)
     {
         if let ElementState::Pressed = key_state {
             match vk_code {
@@ -186,21 +186,21 @@ mod functions {
                 },
 
                 _ => {
-                    if let Some(mut c) = map_vkc(vk_code) {                    
+                    if let Some(mut c) = map_vkc(vk_code) {
                         if kb_state.shift { c = c.to_uppercase().next().unwrap_or(c); }
-                        string.push(c);                
+                        string.push(c);
                     }
                 },
             }
         }
     }
 
-    // [FIXME]: TODO: 
+    // [FIXME]: TODO:
     // - Consider using a hashmap? Could be more efficient.
     pub fn map_vkc(vkc: Option<VirtualKeyCode>) -> Option<char> {
         use glium::glutin::VirtualKeyCode::*;
 
-        if let Some(vkc) = vkc { 
+        if let Some(vkc) = vkc {
             match vkc {
                 Key1 | Numpad0 => Some('1'),
                 Key2 | Numpad1 => Some('2'),
@@ -211,7 +211,7 @@ mod functions {
                 Key7 | Numpad6 => Some('7'),
                 Key8 | Numpad7 => Some('8'),
                 Key9 | Numpad8 => Some('9'),
-                Key0 | Numpad9 => Some('0'),    
+                Key0 | Numpad9 => Some('0'),
                 A => Some('a'),
                 B => Some('b'),
                 C => Some('c'),

@@ -1,18 +1,19 @@
 #![allow(dead_code)]
 
 use glium::Surface;
-use glium_text::{self, TextSystem, FontTexture, TextDisplay};
+use glium_text_rusttype::{self, TextSystem, FontTexture, TextDisplay};
 use glium::glutin::{Event, ElementState, MouseButton, VirtualKeyCode};
-use ui::{Vertex, Shape2d, HandlerOption, UiRequest, KeyboardState, MouseEventHandler, 
+use ui::{Vertex, Shape2d, HandlerOption, UiRequest, KeyboardState, MouseEventHandler,
     KeyboardEventHandler, EventRemainder};
 use util;
-use ui::{self, TextAlign, TextBox, Button}; 
+use ui::{self, TextAlign, TextBox, Button};
 
 pub const ELEMENT_BASE_SCALE: f32 = 0.07;
 pub const BORDER_SHADE: f32 = 0.1;
 pub const DEPRESS_SHADE: f32 = 0.1;
 pub const DEFAULT_TEXT_COLOR: (f32, f32, f32, f32) = (0.01, 0.01, 0.01, 1.0);
-pub const TEXT_BASE_SCALE: f32 = 0.39;
+// pub const TEXT_BASE_SCALE: f32 = 0.39;
+pub const TEXT_BASE_SCALE: f32 = 1.0;
 
 // Notes:
 //
@@ -30,7 +31,7 @@ pub struct ElementText {
     pub base_scale: f32,
     pub element_offset: (f32, f32),
     pub align: TextAlign,
-    pub raw_width: f32,    
+    pub raw_width: f32,
     pub cur_scale: (f32, f32),
     pub cur_center_pos: (f32, f32),
 }
@@ -44,10 +45,10 @@ impl ElementText {
             string: string,
             color: DEFAULT_TEXT_COLOR,
             base_scale: TEXT_BASE_SCALE,
-            element_offset: (0.0, 0.0),
+            element_offset: (0.0, 0.2),
             align: TextAlign::Center,
             raw_width: 0.0,
-            cur_scale: (0.0, 0.0), 
+            cur_scale: (0.0, 0.0),
             cur_center_pos: (0.0, 0.0),
         }
     }
@@ -58,15 +59,15 @@ impl ElementText {
     }
 
     pub fn matrix(&self) -> [[f32; 4]; 4] {
-        [    
+        [
             [self.cur_scale.0, 0.0, 0.0, 0.0,],
             [0.0, self.cur_scale.1, 0.0, 0.0,],
             [0.0, 0.0, 1.0, 0.0,],
-            [    
-                self.cur_center_pos.0, 
-                self.cur_center_pos.1, 
+            [
+                self.cur_center_pos.0,
+                self.cur_center_pos.1,
                 0.0, 1.0f32,
-            ],     
+            ],
         ]
     }
 
@@ -125,27 +126,27 @@ impl ElementKind {
     //     match self {
     //         &mut ElementKind::Button(ref mut button) => button.depress(depress),
     //         _ => (),
-    //     }    
+    //     }
     // }
 }
 
 
-// [FIXME]: TODO: 
+// [FIXME]: TODO:
 // - Revamp 'new()' into builder style functions.
 // - Clean up and consolidate stored positions, scales, etc.
 pub struct Element<R> where R: EventRemainder {
     kind: ElementKind,
     text: ElementText,
-    sub_elements: Vec<Element<R>>,    
+    sub_elements: Vec<Element<R>>,
     shape: Shape2d,
     is_depressed: bool,
     has_mouse_focus: bool,
     has_keybd_focus: bool,
     anchor_point: [f32; 3],
-    anchor_ofs: [f32; 3], 
+    anchor_ofs: [f32; 3],
     base_scale: (f32, f32),
     cur_scale: [f32; 3],
-    cur_center_pos: [f32; 3],        
+    cur_center_pos: [f32; 3],
     border: Option<ElementBorder>,
     mouse_event_handler: HandlerOption<MouseEventHandler<R>>,
     keyboard_event_handler: HandlerOption<KeyboardEventHandler<R>>,
@@ -164,7 +165,7 @@ impl<'a, R> Element<R> where R: EventRemainder {
         let border = Some(ElementBorder { thickness: border_thickness, color: border_color,
             is_visible: false, shape: shape.as_border(border_thickness, border_color) });
 
-        Element { 
+        Element {
             kind: kind,
             text: ElementText::new(""),
             sub_elements: Vec::with_capacity(0),
@@ -176,7 +177,7 @@ impl<'a, R> Element<R> where R: EventRemainder {
             anchor_ofs: anchor_ofs,
             base_scale: (ELEMENT_BASE_SCALE, ELEMENT_BASE_SCALE),
             cur_scale: [0.0, 0.0, 0.0],
-            cur_center_pos: [0.0, 0.0, 0.0],        
+            cur_center_pos: [0.0, 0.0, 0.0],
             border: border,
             mouse_event_handler: HandlerOption::None,
             keyboard_event_handler: HandlerOption::None,
@@ -188,8 +189,8 @@ impl<'a, R> Element<R> where R: EventRemainder {
         self
     }
 
-    pub fn keyboard_event_handler(mut self, handler: KeyboardEventHandler<R>) 
-            -> Element<R> 
+    pub fn keyboard_event_handler(mut self, handler: KeyboardEventHandler<R>)
+            -> Element<R>
     {
         match self.keyboard_event_handler {
             HandlerOption::Sub(idx) => {
@@ -223,7 +224,7 @@ impl<'a, R> Element<R> where R: EventRemainder {
                     , self.keyboard_event_handler);
             }
         }
-        
+
         self.sub_elements.push(sub_element);
         self
     }
@@ -244,7 +245,7 @@ impl<'a, R> Element<R> where R: EventRemainder {
     }
 
     pub fn border(mut self, thickness: f32, color: [f32; 4], is_visible: bool) -> Element<R> {
-        self.border = Some(ElementBorder { thickness: thickness, color: color, 
+        self.border = Some(ElementBorder { thickness: thickness, color: color,
             is_visible: is_visible, shape: self.shape.as_border(thickness, color)});
         self
     }
@@ -266,10 +267,10 @@ impl<'a, R> Element<R> where R: EventRemainder {
             };
 
         // Aspect ratio:
-        let ar = window_dims.1 as f32 / window_dims.0 as f32;        
+        let ar = window_dims.1 as f32 / window_dims.0 as f32;
 
         self.cur_scale = [self.base_scale.0 * ui_scale * ar, self.base_scale.1 * ui_scale, ui_scale];
-        
+
         self.cur_center_pos = [
             self.anchor_point[0] + (self.anchor_ofs[0] * ui_scale * ar),
             self.anchor_point[1] + (self.anchor_ofs[1] * ui_scale),
@@ -277,21 +278,21 @@ impl<'a, R> Element<R> where R: EventRemainder {
         ];
 
         self.text.cur_scale = (
-            self.cur_scale[0] * self.text.base_scale, 
+            self.cur_scale[0] * self.text.base_scale,
             self.cur_scale[1] * self.text.base_scale,
         );
 
         self.text.cur_center_pos = (
-            ((-self.cur_scale[0] * self.text.raw_width / 2.0) * self.text.base_scale) 
+            ((-self.cur_scale[0] * self.text.raw_width / 2.0) * self.text.base_scale)
                 + self.cur_center_pos[0]
-                + (self.text.element_offset.0 * self.cur_scale[0]), 
-            ((-self.cur_scale[1] / 2.0) * self.text.base_scale) 
+                + (self.text.element_offset.0 * self.cur_scale[0]),
+            ((-self.cur_scale[1] / 2.0) * self.text.base_scale)
                 + self.cur_center_pos[1]
-                + (self.text.element_offset.1 * self.cur_scale[1]), 
-        );        
+                + (self.text.element_offset.1 * self.cur_scale[1]),
+        );
 
         // Add vertices for this element's shape:
-        let mut vertices: Vec<Vertex> = self.shape.vertices.iter().map(|&vrt| 
+        let mut vertices: Vec<Vertex> = self.shape.vertices.iter().map(|&vrt|
                 vrt.transform(&self.cur_scale, &self.cur_center_pos)
                 .color(color)
             ).collect();
@@ -299,11 +300,11 @@ impl<'a, R> Element<R> where R: EventRemainder {
         // If we have a border, create a "shadow" of our shape...
         if let Some(ref border) = self.border {
             let border_vertices: Vec<Vertex> = if border.is_visible {
-                border.shape.vertices.iter().map(|&vrt| 
+                border.shape.vertices.iter().map(|&vrt|
                         vrt.transform(&self.cur_scale, &self.cur_center_pos)
                     ).collect()
             } else {
-                self.shape.vertices.iter().map(|&vrt| 
+                self.shape.vertices.iter().map(|&vrt|
                         vrt.transform(&self.cur_scale, &self.cur_center_pos)
                     ).collect()
             };
@@ -326,7 +327,7 @@ impl<'a, R> Element<R> where R: EventRemainder {
 
         // Add indices for our border (shadow of normal shape), if applicable:
         if let Some(ref border) = self.border {
-            let border_indices: Vec<u16> = 
+            let border_indices: Vec<u16> =
                 border.shape.indices.iter().map(|&ind| ind + vertex_idz).collect();
 
             indices.extend_from_slice(&border_indices);
@@ -342,14 +343,14 @@ impl<'a, R> Element<R> where R: EventRemainder {
         indices
     }
 
-    pub fn draw_text<S: Surface>(&self, text_system: &TextSystem, target: &mut S,
-                font_texture: &FontTexture) 
+    pub fn draw_text<S>(&self, text_system: &TextSystem, target: &mut S,
+                font_texture: &FontTexture) where S: Surface
     {
-        let text_display = TextDisplay::new(text_system, font_texture, 
+        let text_display = TextDisplay::new(text_system, font_texture,
             self.get_text());
 
-        glium_text::draw(&text_display, text_system, target, 
-            self.text_matrix(), self.text().get_color());
+        glium_text_rusttype::draw(&text_display, text_system, target,
+            self.text_matrix(), self.text().get_color()).unwrap();
 
         for element in self.sub_elements.iter() {
             element.draw_text(text_system, target, font_texture);
@@ -412,8 +413,8 @@ impl<'a, R> Element<R> where R: EventRemainder {
 
     // [FIXME]: Unused Vars.
     #[allow(unused_variables)]
-    pub fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton, event: Event) 
-            -> (UiRequest, R) 
+    pub fn handle_mouse_input(&mut self, state: ElementState, button: MouseButton, event: Event)
+            -> (UiRequest, R)
     {
         if let MouseButton::Left = button {
             match state {
@@ -424,7 +425,7 @@ impl<'a, R> Element<R> where R: EventRemainder {
                 ElementState::Released => {
                     if self.is_depressed {
                         self.is_depressed = false;
-                    
+
                         if let HandlerOption::Fn(ref mut handler) = self.mouse_event_handler {
                             handler(state, button)
                         } else {
@@ -443,7 +444,7 @@ impl<'a, R> Element<R> where R: EventRemainder {
     // [FIXME]: Unused Vars.
     // [FIXME]: Error message (set up result type).
     #[allow(unused_variables)]
-    pub fn handle_keyboard_input(&mut self, key_state: ElementState, vk_code: Option<VirtualKeyCode>, 
+    pub fn handle_keyboard_input(&mut self, key_state: ElementState, vk_code: Option<VirtualKeyCode>,
                 kb_state: &KeyboardState, event: Event) -> (UiRequest, R)
     {
         match self.keyboard_event_handler {
@@ -463,7 +464,7 @@ impl<'a, R> Element<R> where R: EventRemainder {
     //     self.is_depressed = depress;
     // }
 
-    ///////// [FIXME]: CACHE THIS STUFF PROPERLY ////////// 
+    ///////// [FIXME]: CACHE THIS STUFF PROPERLY //////////
     fn left_edge(&self) -> f32 {
         self.cur_center_pos[0] - (self.shape.radii.0 * self.cur_scale[0])
     }
@@ -484,13 +485,13 @@ impl<'a, R> Element<R> where R: EventRemainder {
 }
 
 // fn shift_and_scale(anchor_point: &[f32; 3], anchor_ofs: &[f32; 3], base_scale: &(f32, f32),
-//             window_dims: (u32, u32), ui_scale: f32) 
+//             window_dims: (u32, u32), ui_scale: f32)
 //         -> ([f32; 3], [f32; 3])
 // {
-//     let ar = window_dims.0 as f32 / window_dims.1 as f32;    
+//     let ar = window_dims.0 as f32 / window_dims.1 as f32;
 
 //     let cur_scale = [(base_scale.0 * ui_scale) / ar, base_scale.1 * ui_scale, 1.0];
-    
+
 //     let cur_center_pos = [
 //         anchor_point[0] + ((anchor_ofs[0] / ar) * ui_scale),
 //         anchor_point[1] + (anchor_ofs[1] * ui_scale),
@@ -503,10 +504,10 @@ impl<'a, R> Element<R> where R: EventRemainder {
 
 // Ensure position is within -1.0 and 1.0 for x and y dims.
 fn verify_position(position: [f32; 3]) {
-    assert!((position[0] <= 1.0 && position[0] >= -1.0) 
-            || (position[1] <= 1.0 && position[1] >= -1.0), 
+    assert!((position[0] <= 1.0 && position[0] >= -1.0)
+            || (position[1] <= 1.0 && position[1] >= -1.0),
         format!("Element::new(): Position out of range: [x: {}, y: {}, z:{}]. \
-            'x' and 'y' must both be between -1.0 and 1.0.", 
+            'x' and 'y' must both be between -1.0 and 1.0.",
             position[0], position[1], position[2])
     );
 }

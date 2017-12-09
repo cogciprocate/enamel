@@ -18,8 +18,8 @@ pub struct MouseState {
 
 impl MouseState {
     pub fn new() -> MouseState {
-        MouseState { 
-            position: [(0, 0); FRAME_HISTORY as usize], 
+        MouseState {
+            position: [(0, 0); FRAME_HISTORY as usize],
             frame: 0,
             left: ElementState::Released,
             right: ElementState::Released,
@@ -41,16 +41,17 @@ impl MouseState {
         (to_gl_dim(px, sw), -to_gl_dim(py, sh))
     }
 
-    pub fn update_position(&mut self, new_pos: (i32, i32)) {
+    // pub fn update_position(&mut self, new_pos: (i32, i32)) {
+    pub fn update_position(&mut self, new_pos: (f64, f64)) {
         self.frame = self.frame ^ 1;
-        self.position[self.frame as usize] = new_pos;
+        self.position[self.frame as usize] = (new_pos.0 as i32, new_pos.1 as i32);
         self.is_stale = false;
         // println!("                             {:?}", self.position[self.frame as usize]);
     }
 
     pub fn set_button(&mut self, button: MouseButton, state: ElementState) {
         match button {
-            MouseButton::Left => self.left = state,            
+            MouseButton::Left => self.left = state,
             MouseButton::Right => self.right = state,
             MouseButton::Middle => self.middle = state,
             MouseButton::Other(b) => { self.other.insert(b, state); },
@@ -67,7 +68,7 @@ impl MouseState {
 
     pub fn button(&self, button: MouseButton) -> ElementState {
         match button {
-            MouseButton::Left => self.left.clone(),            
+            MouseButton::Left => self.left.clone(),
             MouseButton::Right => self.right.clone(),
             MouseButton::Middle => self.middle.clone(),
             MouseButton::Other(b) => self.other[&b],

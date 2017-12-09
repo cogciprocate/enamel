@@ -1,13 +1,12 @@
-#![allow(dead_code, unused_variables)]
-// use find_folder::Search;
-use glium_text::{self, TextSystem, FontTexture, TextDisplay};
+
+use glium_text_rusttype::{self, TextSystem, FontTexture, TextDisplay};
 use glium::{self, VertexBuffer, IndexBuffer, Program, DrawParameters, Surface};
-use glium::backend::glutin_backend::GlutinFacade;
+use glium::backend::glutin::Display;
 use glium::vertex::{EmptyInstanceAttributes as EIAttribs};
-use glium::glutin::{ElementState, MouseButton, Event, VirtualKeyCode};
+use glium::glutin::{ElementState, MouseButton, Event, WindowEvent, VirtualKeyCode};
 use ui::{self, Vertex, Element, MouseState, KeyboardState, UiRequest, EventRemainder};
 
-const TWOSR3: f32 = 1.15470053838;
+// const TWOSR3: f32 = 1.15470053838;
 const DEFAULT_UI_SCALE: f32 = 0.9;
 
 pub struct Pane<'d, R> where R: EventRemainder {
@@ -16,7 +15,7 @@ pub struct Pane<'d, R> where R: EventRemainder {
     elements: Vec<Element<R>>,
     program: Program,
     params: DrawParameters<'d>,
-    display: &'d GlutinFacade,
+    display: &'d Display,
     scale: f32,
     text_system: TextSystem,
     font_texture: FontTexture,
@@ -28,7 +27,7 @@ pub struct Pane<'d, R> where R: EventRemainder {
 }
 
 impl<'d, R> Pane<'d, R> where R: EventRemainder {
-    pub fn new(display: &'d GlutinFacade) -> Pane<'d, R> {
+    pub fn new(display: &'d Display) -> Pane<'d, R> {
         let scale = DEFAULT_UI_SCALE;
         let vbo = None;
         let ibo = None;
@@ -52,12 +51,10 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
 
         // Text font:
         let font_size = 24;
-        // let font_file = Search::ParentsThenKids(3, 3).for_folder("assets").unwrap()
-        //     .join("fonts/NotoSans/NotoSans-Bold.ttf");
         let font_texture = FontTexture::new(display, &include_bytes!(
                 // "/home/nick/projects/vibi/assets/fonts/nanum/NanumBarunGothic.ttf"
                 "assets/fonts/NotoSans/NotoSans-Bold.ttf"
-            )[..], font_size).unwrap();
+            )[..], font_size, FontTexture::ascii_character_list()).unwrap();
 
         Pane {
             vbo: vbo,
@@ -137,33 +134,38 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
             let text_display = TextDisplay::new(&self.text_system, &self.font_texture,
                 element.get_text());
 
-            glium_text::draw(&text_display, &self.text_system, target,
-                element.text_matrix(), element.text().get_color());
+            glium_text_rusttype::draw(&text_display, &self.text_system, target,
+                element.text_matrix(), element.text().get_color()).unwrap();
         }
     }
 
     pub fn handle_event(&mut self, event: Event) -> R {
         match event.clone() {
-            Event::Resized(..) => {
-                self.refresh_vertices();
-                R::event(event)
-            },
-            Event::KeyboardInput(key_state, _, vk_code) => {
-                self.handle_keyboard_input(key_state, vk_code, event)
-            },
-            Event::MouseInput(state, button) => {
-                self.mouse_state.set_button(button, state);
-                self.update_mouse_focus();
-                self.handle_mouse_input(state, button, event)
-            },
-            Event::MouseMoved(p_x, p_y) => {
-                self.mouse_state.update_position((p_x, p_y));
-                R::event(event)
-            },
-            Event::MouseWheel(delta, _) => {
-                R::event(event)
-            },
-            _ => R::event(event)
+            Event::WindowEvent { window_id: _, event: win_event } => {
+                match win_event {
+                WindowEvent::Resized(..) => {
+                    self.refresh_vertices();
+                    R::event(event)
+                },
+                WindowEvent::KeyboardInput { device_id: _, input } => {
+                    self.handle_keyboard_input(input.state, input.virtual_keycode, event)
+                },
+                WindowEvent::MouseInput { device_id: _, state, button } => {
+                    self.mouse_state.set_button(button, state);
+                    self.update_mouse_focus();
+                    self.handle_mouse_input(state, button, event)
+                },
+                WindowEvent::MouseMoved { device_id: _, position } => {
+                    self.mouse_state.update_position(position);
+                    R::event(event)
+                },
+                WindowEvent::MouseWheel { device_id: _, delta: _, phase: _ } => {
+                    R::event(event)
+                },
+                _ => R::event(event),
+                }
+            }
+            _ => R::event(event),
         }
     }
 
@@ -179,7 +181,11 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
             match key_state {
                 ElementState::Pressed => { match vk_code {
                     Some(vkc) => { match vkc {
-                        VirtualKeyCode::Q => R::event(Event::Closed),
+                        VirtualKeyCode::Q => {
+                            // R::event(Event::WindowEvent { window_id: 0,
+                            //     event: WindowEvent::Closed })
+                            R::event(event)
+                        },
                         _ => R::event(event),
                     } },
                     None => R::event(event),
@@ -190,7 +196,7 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
             // No modifiers:
             // Pass input to the element that has keyboard focus, if any:
             if let Some(ele_idx) = self.keybd_focused {
-                let (request, remainder) = self.elements[ele_idx].handle_keyboard_input(
+                let (_request, remainder) = self.elements[ele_idx].handle_keyboard_input(
                     key_state, vk_code, &self.keybd_state, event);
                 remainder
             } else {

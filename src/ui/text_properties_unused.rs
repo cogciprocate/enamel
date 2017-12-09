@@ -1,5 +1,5 @@
-#![allow(dead_code)]
-use glium_text::{TextSystem, FontTexture, TextDisplay};
+// #![allow(dead_code)]
+use glium_text_rusttype::{TextSystem, FontTexture, TextDisplay};
 use ui::{TextAlign};
 
 pub const DEFAULT_TEXT_COLOR: (f32, f32, f32, f32) = (0.01, 0.01, 0.01, 1.0);
@@ -12,7 +12,7 @@ pub struct ElementText {
     pub base_scale: f32,
     pub element_offset: (f32, f32),
     pub align: TextAlign,
-    pub raw_width: f32,    
+    pub raw_width: f32,
     pub cur_scale: (f32, f32),
     pub cur_center_pos: (f32, f32),
 }
@@ -29,7 +29,7 @@ impl ElementText {
             element_offset: (0.0, 0.0),
             align: TextAlign::Center,
             raw_width: 0.0,
-            cur_scale: (0.0, 0.0), 
+            cur_scale: (0.0, 0.0),
             cur_center_pos: (0.0, 0.0),
         }
     }
@@ -40,15 +40,15 @@ impl ElementText {
     }
 
     pub fn matrix(&self) -> [[f32; 4]; 4] {
-        [    
+        [
             [self.cur_scale.0, 0.0, 0.0, 0.0,],
             [0.0, self.cur_scale.1, 0.0, 0.0,],
             [0.0, 0.0, 1.0, 0.0,],
-            [    
-                self.cur_center_pos.0, 
-                self.cur_center_pos.1, 
+            [
+                self.cur_center_pos.0,
+                self.cur_center_pos.1,
                 0.0, 1.0f32,
-            ],     
+            ],
         ]
     }
 

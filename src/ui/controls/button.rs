@@ -3,7 +3,7 @@ use ui::{Shape2d, Element, ElementKind, EventRemainder};
 
 
 pub struct Button {
-    is_depressed: bool,
+    pub is_depressed: bool,
 }
 
 impl Button {
