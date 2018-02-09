@@ -150,16 +150,16 @@ impl<'d, R> Pane<'d, R> where R: EventRemainder {
                 WindowEvent::KeyboardInput { device_id: _, input } => {
                     self.handle_keyboard_input(input.state, input.virtual_keycode, event)
                 },
-                WindowEvent::MouseInput { device_id: _, state, button } => {
+                WindowEvent::MouseInput { device_id: _, state, button, modifiers: _ } => {
                     self.mouse_state.set_button(button, state);
                     self.update_mouse_focus();
                     self.handle_mouse_input(state, button, event)
                 },
-                WindowEvent::MouseMoved { device_id: _, position } => {
+                WindowEvent::CursorMoved { device_id: _, position, modifiers: _ } => {
                     self.mouse_state.update_position(position);
                     R::event(event)
                 },
-                WindowEvent::MouseWheel { device_id: _, delta: _, phase: _ } => {
+                WindowEvent::MouseWheel { device_id: _, delta: _, phase: _, modifiers: _ } => {
                     R::event(event)
                 },
                 _ => R::event(event),

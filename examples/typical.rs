@@ -79,13 +79,13 @@ impl<'a> Background {
                             println!("Key: 0x{:02X} ({:?}) has been {:?}.", input.scancode,
                                 enamel::ui::map_vkc(input.virtual_keycode), input.state);
                         },
-                        WindowEvent::MouseMoved { device_id: _, position } => {
+                        WindowEvent::CursorMoved { device_id: _, position, modifiers: _ } => {
                             self.handle_mouse_moved(position);
                         }
-                        WindowEvent::MouseWheel { device_id: _, delta, phase: _ } => {
+                        WindowEvent::MouseWheel { device_id: _, delta, phase: _, modifiers: _ } => {
                             self.handle_mouse_wheel(delta);
                         }
-                        WindowEvent::MouseInput { device_id: _, state, button } => {
+                        WindowEvent::MouseInput { device_id: _, state, button, modifiers: _ } => {
                             self.handle_mouse_input(state, button)
                         }
                         WindowEvent::Touch(touch) => println!("Touch recieved: {:?}", touch),
